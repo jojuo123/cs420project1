@@ -1,9 +1,8 @@
 import Agent as ag
 
 class Hider(ag.Agent):
-    def __init__(self, position, sight):
-        # ag.__init__(self, position, sight)
-        super().__init__(position, sight)
+    def __init__(self, positionx, positiony, sight):
+        super().__init__(positionx, positiony, sight)
     
     def Dead(self):
         self.position = [-1, -1]
