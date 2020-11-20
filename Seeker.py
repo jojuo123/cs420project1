@@ -1,8 +1,8 @@
 import Agent as ag
 
 class Seeker(ag.Agent):
-    def __init__(self, position, sight):
-        ag.__init__(self, position, sight)
+    def __init__(self, positionx, positiony, sight):
+        super().__init__(positionx, positiony, sight)
     
     def move(self, environment, announceArray, visionArray):
         pass

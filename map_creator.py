@@ -128,7 +128,6 @@ while not done:
  
     # Limit to 60 frames per second
     clock.tick(60)
- 
     # Go ahead and update the screen with what we've drawn.
     pygame.display.flip()
  
