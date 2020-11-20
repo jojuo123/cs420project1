@@ -11,4 +11,4 @@ class Engine:
         self.hiders = copy.deepcopy(hiders)
 
     def play(self):
-        pass
+        self.seeker.move(self.environment, [1, 1], [1, 1, 2])
