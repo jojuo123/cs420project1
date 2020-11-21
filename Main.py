@@ -3,7 +3,6 @@ import Agent as ag
 import Hider as hide 
 import Seeker as seek
 import Engine as eng
-#import map_creator as mapcre
 import pygame
 import copy
 
@@ -77,7 +76,7 @@ if __name__=='__main__':
     hiders = []
     seekpos = [1, 1]
     seeker = seek.Seeker(1, 1, 5)
-    hiders.append(hide.Hider(2, 2, 3))
+    hiders.append(hide.Hider(1, 2, 3))
     #khoi tao engine
     engine = eng.Engine(environment=environment, hiders=hiders, seeker=seeker)
 
@@ -131,6 +130,7 @@ if __name__=='__main__':
                                 HEIGHT])
         #gameplay
         engine.play()
+        done = engine.isEnd()
         
     # Limit to 60 frames per second
         clock.tick(60)
