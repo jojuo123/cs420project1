@@ -5,7 +5,8 @@ import Seeker as seek
 import Engine as eng
 import pygame
 import copy
-import thanh_heuristic as thanh
+import thanh_heuristic
+import time
 
 # Define some colors
 BLACK = (0, 0, 0)
@@ -14,6 +15,7 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0 , 255)
 DARK_GREY = (128, 128, 128)
+MAX_WAIT_TIME = 0.25
 MAP_FILE = "map.txt"
  
 # This sets the WIDTH and HEIGHT of each grid location
@@ -83,7 +85,7 @@ if __name__=='__main__':
 
     visual_map = update_visual_map(engine)
 
-    test = thanh(board)
+    test = thanh_heuristic.thanh(board)
 
     # Initialize pygame
     pygame.init()
@@ -104,6 +106,7 @@ if __name__=='__main__':
     clock = pygame.time.Clock()
 
     #main loop
+    timing = time.time()
     while not done:
         for event in pygame.event.get():  # User did something
             if event.type == pygame.QUIT:  # If user clicked close
@@ -111,6 +114,11 @@ if __name__=='__main__':
         if done:
             break
         screen.fill(BLACK)
+
+        wait_time = time.time() - timing
+        if time.time() - timing >= MAX_WAIT_TIME:
+            engine.seeker.position[0], engine.seeker.position[1] = test.make_move(engine.seeker.position[0],engine.seeker.position[1])
+            timing = time.time()
 
         visual_map = update_visual_map(engine)
         

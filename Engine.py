@@ -34,7 +34,7 @@ class Engine:
         #   announceList.append(hider.announce(self.turn)) if khac <> None
 
     def isEnd(self):
-        for hider in self.Hiders:
+        for hider in self.hiders:
             if hider.position != [-1, -1]:
                 return False
         return True
