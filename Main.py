@@ -82,8 +82,6 @@ if __name__=='__main__':
     engine = eng.Engine(environment=environment, hiders=hiders, seeker=seeker)
 
     visual_map = update_visual_map(engine)
-    #total_row = len(visual_map)
-    #total_column = len(visual_map[0])
 
     # Initialize pygame
     pygame.init()
