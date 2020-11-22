@@ -2,13 +2,15 @@ import copy
 import numpy as np
 
 class thanh:
-    def __init__(self, map, x, y):
+    def __init__(self, map):
         self.map = copy.deepcopy(map)
         self.row = 0
         self.column = 0
         self.row = len(self.map)
         self.column = len(self.map[0])
         self.heuristic_map = np.zeros((m,n))
+        self.generate_heuristic()
+        self.calculate_all
 
     def generate_heuristic(self):
         for i in range(self.row):
@@ -29,7 +31,8 @@ class thanh:
         while self.map[xx][yy] == 1:
             if count == 0:
                 count = 7
-            else count -= 1
+            else:
+                count -= 1
             xx = x + move_x[count]
             yy = y + move_y[count]
         start_step = count
@@ -55,6 +58,12 @@ class thanh:
             yy = y + move_y[count]
             if xx > 0 and xx < self.row and yy > 0 and yy < self.column:
                 self.heuristic_map[xx][yy] += self.heuristic_map[x][y]/2
+
+    def calculate_all(self):
+        for i in range(self.row):
+            for j in range(self.column):
+                calculate_heuristic(i,j)
+        print(self.heuristic_map)
 
             
 

@@ -5,6 +5,7 @@ import Seeker as seek
 import Engine as eng
 import pygame
 import copy
+import thanh_heuristic as thanh
 
 # Define some colors
 BLACK = (0, 0, 0)
@@ -81,6 +82,8 @@ if __name__=='__main__':
     engine = eng.Engine(environment=environment, hiders=hiders, seeker=seeker)
 
     visual_map = update_visual_map(engine)
+
+    test = thanh(board)
 
     # Initialize pygame
     pygame.init()
