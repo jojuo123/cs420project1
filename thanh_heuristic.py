@@ -11,20 +11,39 @@ class thanh:
         self.row = len(self.map)
         self.column = len(self.map[0])
         self.heuristic_map = np.zeros((self.row,self.column))
+        self.basic_heuristic = np.zeros((self.row,self.column))
         self.move_x = [-1, -1, -1 , 0 , 1, 1, 1, 0]
         self.move_y = [-1, 0, 1, 1, 1, 0, -1, -1]
         self.generate_heuristic()
+        self.transfer_points()
 
+    def bonus_each_round(self):
+        for i in range(self.row):
+            for j in range(self.column):
+                if self.map[i][j] == 0:
+                    self.heuristic_map[i][j] -= 0.2
 
     def generate_heuristic(self):
         for i in range(self.row):
             for j in range(self.column):
                 if self.map[i][j] == 0:
                     self.calculate_heuristic(i,j)
+
+    def transfer_points(self):
+        for i in range(self.row):
+            for j in range(self.column):
+                self.heuristic_map[i][j] += self.basic_heuristic[i][j]
+        #reverse heuristic
+        for i in range(self.row):
+            for j in range(self.column):
+                self.heuristic_map[i][j] *= -1
+        self.write_log()
+
+    def write_log(self):
         file = open("thanh.txt","w")
         for i in range(self.row):
             for j in range(self.column):
-                file.write(str(int(self.heuristic_map[i][j])) + self.spacebar(self.heuristic_map[i][j]))
+                file.write(str(int(self.heuristic_map[i][j])) + '  ')
             file.write('\n')
         file.close()
 
@@ -70,16 +89,14 @@ class thanh:
             elif self.map[xx][yy] == 1:
                 stack += 1
             elif self.map[xx][yy] == 0:
-                self.heuristic_map[x][y] += 2**stack
+                self.basic_heuristic[x][y] += 2**stack
                 stack = 0
             if i == 7:
-                self.heuristic_map[x][y] += 2**stack
+                self.basic_heuristic[x][y] += 2**stack
                 stack = 0
             count += 1
             if count == 8:
                 count = 0
-        #diem nhan pham
-        self.heuristic_map[x][y] += random.randint(1,5)
 
         #spread heuristic
         count = 0
@@ -87,37 +104,68 @@ class thanh:
             xx = x + self.move_x[count]
             yy = y + self.move_y[count]
             if xx >= 0 and xx < self.row and yy >= 0 and yy < self.column and self.map[xx][yy] == 0:
-                self.heuristic_map[xx][yy] += self.heuristic_map[x][y]/10
+                self.heuristic_map[xx][yy] += self.basic_heuristic[x][y]/5
             count += 1
 
     def make_move(self, x, y):
         self.penalty(x,y)
+        goal_x, goal_y = self.local_min(x,y)
+        print(goal_x,goal_y,self.heuristic_map[goal_x,goal_y])
+        save_x = 0
+        save_y = 0
+        min_moves = 9999
+        for i in range(8):
+            xx = x + self.move_x[i]
+            yy = y + self.move_y[i]
+            if xx >= 0 and xx < self.row and yy >= 0 and yy < self.column and self.map[xx][yy] == 0 and abs(xx - goal_x) + abs(yy - goal_y) + self.heuristic_map[xx][yy] < min_moves:
+                min_moves = abs(xx - goal_x) + abs(yy - goal_y) + self.heuristic_map[xx][yy]
+                save_x = xx
+                save_y = yy
+        self.bonus_each_round()
+        self.write_log()
+        return save_x, save_y
+        
+
+    def local_max(self, x, y):
         max = 0
         xx = 0
         yy = 0
-        save_x= 0
+        save_x = 0
         save_y = 0
-        for i in range(8):
-            xx = x + self.move_x[i]
-            yy = y + self.move_y[i]
-            if xx >= 0 and xx < self.row and yy >= 0 and yy < self.column and self.heuristic_map[xx][yy] > max:
-                max = self.heuristic_map[xx][yy]
-                save_x = xx
-                save_y = yy
+        for i in range(-3,4,1):
+            for j in range(-3,4,1):
+                xx = x + i
+                yy = y + j
+                if xx >= 0 and xx < self.row and yy >= 0 and yy < self.column and self.heuristic_map[xx][yy] > max and self.map[xx][yy] == 0:
+                    max = self.heuristic_map[xx][yy]
+                    save_x = xx
+                    save_y = yy
+        return save_x, save_y
+
+    def local_min(self, x, y):
+        min = 9999
+        xx = 0
+        yy = 0
+        save_x = 0
+        save_y = 0
+        for i in range(-20,21,1):
+            for j in range(-20,21,1):
+                xx = x + i
+                yy = y + j
+                if xx >= 0 and xx < self.row and yy >= 0 and yy < self.column and self.heuristic_map[xx][yy] < min and self.map[xx][yy] == 0:
+                    min = self.heuristic_map[xx][yy]
+                    save_x = xx
+                    save_y = yy
         return save_x, save_y
 
     def penalty(self,x,y):
-        min = 9999
-        save_x = 0
-        save_y = 0
-        for i in range(8):
-            xx = x + self.move_x[i]
-            yy = y + self.move_y[i]
-            if xx > 0 and xx < self.row and yy > 0 and yy < self.column and self.heuristic_map[xx][yy] < min:
-                min = self.heuristic_map[xx][yy]
-                save_x = xx
-                save_y = yy
-        self.heuristic_map[x][y] = self.heuristic_map[save_x][save_y] - 2
+        res_x = 0
+        res_y = 0
+        res_x, res_y = self.local_max(x,y)
+        if (self.heuristic_map[res_x][res_y] > self.heuristic_map[x][y]):
+            self.heuristic_map[x][y] += abs(self.heuristic_map[x][y])
+        else:
+            self.heuristic_map[x][y] += abs(self.heuristic_map[res_x][res_y])
 
     
     def breakpoint(self):
