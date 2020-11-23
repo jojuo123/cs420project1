@@ -15,8 +15,9 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0 , 255)
 DARK_GREY = (128, 128, 128)
+PINK = (255, 192, 203)
 MAX_WAIT_TIME = 0.25
-MAP_FILE = "map/map2.txt"
+MAP_FILE = "map/map.txt"
  
 # This sets the WIDTH and HEIGHT of each grid location
 WIDTH = 20
@@ -78,7 +79,7 @@ if __name__=='__main__':
     #khoi tao hider va seeker
     hiders = []
     seekpos = [1, 1]
-    seeker = seek.Seeker(1, 1, 5)
+    seeker = seek.Seeker(1, 1, 3)
     hiders.append(hide.Hider(1, 2, 3))
     #khoi tao engine
     engine = eng.Engine(environment=environment, hiders=hiders, seeker=seeker)
@@ -120,16 +121,18 @@ if __name__=='__main__':
         wait_time = time.time() - timing
         if time.time() - timing >= MAX_WAIT_TIME:
             seenable = engine.seeker.getVision(engine.environment)
-            file = open("seeker_vision.txt","w")
-            for i in range(len(seenable)):
-                for j in range(len(seenable[0])):
-                    file.write(str(seenable[i][j]) + ' ')
-                file.write('\n')
-            file.close()
+            
+                        
             engine.seeker.position[0], engine.seeker.position[1] = test.make_move(engine.seeker.position[0],engine.seeker.position[1],seenable)
             timing = time.time()
 
         visual_map = update_visual_map(engine)
+        
+        seenable = engine.seeker.getVision(engine.environment)
+        for i in range(len(seenable)):
+                for j in range(len(seenable[0])):
+                    if visual_map[i][j] == 0 and seenable[i][j] == 1:
+                        visual_map[i][j] = 4
         
         for row in range(total_row):
             for column in range(total_column):
@@ -140,6 +143,8 @@ if __name__=='__main__':
                     color = RED
                 elif visual_map[row][column] == 3:
                     color = GREEN
+                elif visual_map[row][column] == 4:
+                    color = PINK
                 pygame.draw.rect(screen,
                                 color,
                                 [(MARGIN + WIDTH) * column + MARGIN,

@@ -21,7 +21,7 @@ class thanh:
         for i in range(self.row):
             for j in range(self.column):
                 if self.map[i][j] == 0:
-                    self.heuristic_map[i][j] -= 0.2
+                    self.heuristic_map[i][j] -= 0.5
 
     def generate_heuristic(self):
         for i in range(self.row):
@@ -110,7 +110,8 @@ class thanh:
     def make_move(self, x, y, vision_map):
         #penalty before processing
         penalty_point = self.penalty(x,y)
-        #self.penalty_vision(vision_map,penalty_point)
+        self.penalty_vision(vision_map,penalty_point)
+
 
         goal_x, goal_y = self.local_min(x,y)
         print(goal_x,goal_y,self.heuristic_map[goal_x,goal_y])
@@ -130,13 +131,13 @@ class thanh:
         
 
     def local_max(self, x, y):
-        max = 0
+        max = -9999
         xx = 0
         yy = 0
         save_x = 0
         save_y = 0
-        for i in range(-3,4,1):
-            for j in range(-3,4,1):
+        for i in range(-20,21,1):
+            for j in range(-20,21,1):
                 xx = x + i
                 yy = y + j
                 if xx >= 0 and xx < self.row and yy >= 0 and yy < self.column and self.heuristic_map[xx][yy] > max and self.map[xx][yy] == 0:
@@ -165,17 +166,20 @@ class thanh:
         res_x = 0
         res_y = 0
         res_x, res_y = self.local_max(x,y)
+        penalty_point = 0
         if (self.heuristic_map[res_x][res_y] > self.heuristic_map[x][y]):
-            self.heuristic_map[x][y] += abs(self.heuristic_map[x][y])
+            penalty_point = self.heuristic_map[x][y]
+            self.heuristic_map[x][y] += abs(self.heuristic_map[x][y])*4
         else:
-            self.heuristic_map[x][y] += abs(self.heuristic_map[res_x][res_y])
-        return self.heuristic_map[x][y]
+            penalty_point = self.heuristic_map[res_x][res_y]
+            self.heuristic_map[x][y] += abs(self.heuristic_map[res_x][res_y])*4
+        return penalty_point
 
     def penalty_vision(self,vision_map, penalty_point):
         for i in range(self.row):
             for j in range(self.column):
-                if (vision_map[i][j] == 1):
-                    self.heuristic_map[i][j] = penalty_point
+                if vision_map[i][j] == 1 and self.map[i][j] == 0:
+                    self.heuristic_map[i][j] += (penalty_point - self.heuristic_map[i][j])*0.3
 
     
     def breakpoint(self):
