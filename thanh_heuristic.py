@@ -107,8 +107,11 @@ class thanh:
                 self.heuristic_map[xx][yy] += self.basic_heuristic[x][y]/5
             count += 1
 
-    def make_move(self, x, y):
-        self.penalty(x,y)
+    def make_move(self, x, y, vision_map):
+        #penalty before processing
+        penalty_point = self.penalty(x,y)
+        #self.penalty_vision(vision_map,penalty_point)
+
         goal_x, goal_y = self.local_min(x,y)
         print(goal_x,goal_y,self.heuristic_map[goal_x,goal_y])
         save_x = 0
@@ -166,6 +169,13 @@ class thanh:
             self.heuristic_map[x][y] += abs(self.heuristic_map[x][y])
         else:
             self.heuristic_map[x][y] += abs(self.heuristic_map[res_x][res_y])
+        return self.heuristic_map[x][y]
+
+    def penalty_vision(self,vision_map, penalty_point):
+        for i in range(self.row):
+            for j in range(self.column):
+                if (vision_map[i][j] == 1):
+                    self.heuristic_map[i][j] = penalty_point
 
     
     def breakpoint(self):

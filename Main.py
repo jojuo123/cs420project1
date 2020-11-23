@@ -16,7 +16,7 @@ RED = (255, 0, 0)
 BLUE = (0, 0 , 255)
 DARK_GREY = (128, 128, 128)
 MAX_WAIT_TIME = 0.25
-MAP_FILE = "map.txt"
+MAP_FILE = "map/map2.txt"
  
 # This sets the WIDTH and HEIGHT of each grid location
 WIDTH = 20
@@ -87,6 +87,8 @@ if __name__=='__main__':
 
     test = thanh_heuristic.thanh(board)
 
+    print(engine.seeker.getVision(engine.environment))
+
     # Initialize pygame
     pygame.init()
  
@@ -117,7 +119,14 @@ if __name__=='__main__':
 
         wait_time = time.time() - timing
         if time.time() - timing >= MAX_WAIT_TIME:
-            engine.seeker.position[0], engine.seeker.position[1] = test.make_move(engine.seeker.position[0],engine.seeker.position[1])
+            seenable = engine.seeker.getVision(engine.environment)
+            file = open("seeker_vision.txt","w")
+            for i in range(len(seenable)):
+                for j in range(len(seenable[0])):
+                    file.write(str(seenable[i][j]) + ' ')
+                file.write('\n')
+            file.close()
+            engine.seeker.position[0], engine.seeker.position[1] = test.make_move(engine.seeker.position[0],engine.seeker.position[1],seenable)
             timing = time.time()
 
         visual_map = update_visual_map(engine)
