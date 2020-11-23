@@ -75,7 +75,7 @@ if __name__=='__main__':
     #khoi tao hider va seeker
     hiders = []
     seekpos = [1, 1]
-    seeker = seek.Seeker(1, 1, 5)
+    seeker = seek.Seeker(1, 1, 5, 5)
     hiders.append(hide.Hider(1, 2, 3))
     #khoi tao engine
     engine = eng.Engine(environment=environment, hiders=hiders, seeker=seeker)
