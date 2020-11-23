@@ -3,9 +3,9 @@ import Agent as ag
 import Hider as hide 
 import Seeker as seek
 import Engine as eng
-#import map_creator as mapcre
 import pygame
 import copy
+import time
 
 # Define some colors
 BLACK = (0, 0, 0)
@@ -75,9 +75,9 @@ if __name__=='__main__':
     environment = env.Environment(board, total_row, total_column)
     #khoi tao hider va seeker
     hiders = []
-    seekpos = [1, 1]
-    seeker = seek.Seeker(1, 1, 5)
-    hiders.append(hide.Hider(2, 2, 3))
+    seeker = seek.Seeker(1, 1, 5, 5)
+    hiders.append(hide.Hider(1, 3, 3))
+    hiders.append(hide.Hider(1, 6, 3))
     #khoi tao engine
     engine = eng.Engine(environment=environment, hiders=hiders, seeker=seeker)
 
@@ -131,6 +131,8 @@ if __name__=='__main__':
                                 HEIGHT])
         #gameplay
         engine.play()
+        time.sleep(0.5)
+        done = engine.isEnd()
         
     # Limit to 60 frames per second
         clock.tick(60)

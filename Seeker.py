@@ -1,11 +1,161 @@
 import Agent as ag
-
+from heapq import heappush, heappop, heapify
+import math
+import random
 class Seeker(ag.Agent):
-    def __init__(self, positionx, positiony, sight):
+    # def __init__(self, positionx, positiony, sight):
+    #     self.soundRange = sight
+    #     #mảng 2 chiều đánh dấu số lần thăm các đỉnh tại environment (memory của seeker tại 1 lần chơi)
+    #     self.memory = None
+    #     super().__init__(positionx, positiony, sight)
+    
+    def __init__(self, positionx, positiony, sight, soundRange):
+        self.soundRange = soundRange
+        self.memory = None
         super().__init__(positionx, positiony, sight)
     
     def move(self, environment, announceArray, visionArray):
-        pass
+        #pass
+        return self.moveL2AStar(environment, announceArray, visionArray)
+
+    def initVisit(self, environment):
+        rows = environment.rows
+        columns = environment.columns
+        self.memory = [[0 for i in range(rows)] for j in range(columns)]
+
+    def moveL2AStar(self, environment, announceArray, visionArray):
+        Inf = float('inf')
+        class Node:
+            def __init__(self, position, gscore=Inf, fscore=Inf):
+                self.position = position
+                self.gscore = gscore
+                self.fscore = fscore
+                self.closed = False
+                self.out_heap = True
+                self.parent = None
+            
+            def __lt__(self, b):
+                return self.fscore < b.fscore
+        
+        class NodeDict(dict):
+
+            def __missing__(self, k):
+                klist = [k[0], k[1]]
+                v = Node(klist)
+                self.__setitem__(k, v)
+                return v
+        
+        #cần viết lại hàm này
+        def findGoal(position, environment, announceArray, visionArray, memory):
+            vc = 1000001
+            N = environment.rows
+            M = environment.columns
+
+            #nếu hider trong sight thì đánh điểm cao lên
+            GoalEval = [[0 for i in range(N)] for j in range(M)]
+            for i in visionArray:
+                GoalEval[i[0]][i[1]] += vc - heuristicFnc(position, i)
+
+            for i in announceArray:
+                GoalEval[i[0]][i[1]] += math.floor(vc / 2) - heuristicFnc(position, i)
+
+            
+            maxGoal = GoalEval[0][0]
+            goalPosition = [0, 0]
+            for i in range(N):
+                for j in range(M):
+                    if GoalEval[i][j] > maxGoal:
+                        maxGoal = GoalEval[i][j]
+                        goalPosition = [i, j]
+            
+            return goalPosition
+        
+        def reachedGoal(nodePosition, goalPosition):
+            return nodePosition == goalPosition
+
+        def heuristicFnc(nodePosition, goalPosition):
+            #max(|y-y'|, |x-x'|)
+            return max(abs(goalPosition[0] - nodePosition[0]), abs(goalPosition[1] - nodePosition[1]))
+        
+        def traceBack(currentNode, startNode):
+            while (not currentNode.parent is None) and currentNode.parent != startNode:
+                currentNode = currentNode.parent
+            return currentNode.position
+        
+        def getNeighbors(current, environment):
+            def isInside(ux, uy, rows, columns):
+                return (0 <= ux and ux < rows and 0 <= uy and uy < columns)
+            result = []
+
+            x = current[0]
+            y = current[1]
+            # dx = [-1, -1, -1, 0, 0, 1, 1, 1]
+            # dy = [-1, 0, 1, -1, 1, -1, 0, 1]
+
+            #tạo sự ngẫu nhiên của thuật toán về hướng di chuyển
+            dxy = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]
+
+            random.shuffle(dxy)
+            for i in range(8):
+                # ux = x + dx[i]
+                # uy = y + dy[i]
+                ux = x + dxy[i][0]
+                uy = y + dxy[i][1]
+                
+                if isInside(ux, uy, environment.rows, environment.columns) and environment.board[ux][uy] != 1:
+                    result.append((ux, uy))
+            return result
+        #? neu khong tim duoc goal hop ly???
+
+        #init for A-star
+        #nếu là turn đầu
+        if self.memory is None:
+            self.initVisit(environment)
+
+        goalPosition = findGoal(self.position, environment, announceArray, visionArray, self.memory)
+        #print('goal: ', goalPosition)
+        startNode = Node(self.position, gscore=0, fscore=heuristicFnc(self.position,goalPosition))
+
+        #tạo map từ position đến Node
+        nodeDict = NodeDict()
+        nodeDict[(self.position[0], self.position[1])] = startNode
+        
+        #khởi tạo heap
+        openSet = []
+        heappush(openSet, startNode)
+        while openSet:
+            #lấy node lớn nhất
+            current = heappop(openSet)
+            #đã tới goal
+            #self.memory[current.position[0]][current.position[1]] += 1
+            if reachedGoal(current.position, goalPosition):
+                return traceBack(current, startNode)
+            #đưa ra khỏi heap
+            current.out_heap = True
+            #đưa vào explored set
+            current.closed = True
+            #print('current pos: ', current.position)
+            for u in map(lambda n: nodeDict[n], getNeighbors(current.position, environment)):
+                # if current.position == [2, 2]:
+                #     print(u.position)
+                #print('uGscore: ', u.gscore)
+                if u.closed:
+                    continue
+                uGscore = current.gscore + 1 #khoang cach tu node hien tai den cac dinh ke la 1
+                #print('uGscore: ', u.position, uGscore)
+                if uGscore >= u.gscore:
+                    continue
+                u.parent = current
+                u.gscore = uGscore
+                u.fscore = uGscore + heuristicFnc(u.position, goalPosition)
+                if u.out_heap:
+                    u.out_heap = False
+                    heappush(openSet, u)
+                    #print('push heap', u.position)
+                else:
+                    openSet.remove(u)
+                    heappush(openSet, u)
+        return None
     
     def getVision(self, environment):
         #return mang 2d {0,1} 
@@ -86,6 +236,6 @@ class Seeker(ag.Agent):
         considerVision(c)
         c = genCell(self.position, -1, -1)
         considerVision(c)
-
+        
         return a
     
