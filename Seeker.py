@@ -236,6 +236,6 @@ class Seeker(ag.Agent):
         considerVision(c)
         c = genCell(self.position, -1, -1)
         considerVision(c)
-
+        
         return a
     
