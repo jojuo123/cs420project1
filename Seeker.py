@@ -401,3 +401,4 @@ class Seeker(ag.Agent):
         newpos = self.thanh1.make_move(self.position[0], self.position[1], self.getVision(environment))
         # Because newpos is tuple (... :< pair programming không để ý)
         return list(newpos)
+
