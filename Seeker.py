@@ -9,10 +9,9 @@ class Seeker(ag.Agent):
     #     self.memory = None
     #     super().__init__(positionx, positiony, sight)
     
-    def __init__(self, positionx, positiony, sight, soundRange):
-        self.soundRange = soundRange
-        self.memory = None
-        super().__init__(positionx, positiony, sight)
+    #def __init__(self, positionx, positiony, sight, soundRange):
+     #   self.soundRange = soundRange
+      #  super().__init__(positionx, positiony, sight)
     
     def move(self, environment, announceArray, visionArray):
         #pass

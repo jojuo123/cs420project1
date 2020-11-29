@@ -5,6 +5,7 @@ import Seeker as seek
 import Engine as eng
 import pygame
 import copy
+import thanh_heuristic
 import time
 
 # Define some colors
@@ -14,7 +15,9 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0 , 255)
 DARK_GREY = (128, 128, 128)
-MAP_FILE = "map.txt"
+PINK = (255, 192, 203)
+MAX_WAIT_TIME = 0.25
+MAP_FILE = "map/map.txt"
  
 # This sets the WIDTH and HEIGHT of each grid location
 WIDTH = 20
@@ -75,15 +78,17 @@ if __name__=='__main__':
     environment = env.Environment(board, total_row, total_column)
     #khoi tao hider va seeker
     hiders = []
-    seeker = seek.Seeker(1, 1, 5, 5)
-    hiders.append(hide.Hider(1, 3, 3))
-    hiders.append(hide.Hider(1, 6, 3))
+    seekpos = [1, 1]
+    seeker = seek.Seeker(1, 1, 3)
+    hiders.append(hide.Hider(1, 2, 3))
     #khoi tao engine
     engine = eng.Engine(environment=environment, hiders=hiders, seeker=seeker)
 
     visual_map = update_visual_map(engine)
-    #total_row = len(visual_map)
-    #total_column = len(visual_map[0])
+
+    test = thanh_heuristic.thanh(board)
+
+    print(engine.seeker.getVision(engine.environment))
 
     # Initialize pygame
     pygame.init()
@@ -104,6 +109,7 @@ if __name__=='__main__':
     clock = pygame.time.Clock()
 
     #main loop
+    timing = time.time()
     while not done:
         for event in pygame.event.get():  # User did something
             if event.type == pygame.QUIT:  # If user clicked close
@@ -112,7 +118,21 @@ if __name__=='__main__':
             break
         screen.fill(BLACK)
 
+        wait_time = time.time() - timing
+        if time.time() - timing >= MAX_WAIT_TIME:
+            seenable = engine.seeker.getVision(engine.environment)
+            
+                        
+            engine.seeker.position[0], engine.seeker.position[1] = test.make_move(engine.seeker.position[0],engine.seeker.position[1],seenable)
+            timing = time.time()
+
         visual_map = update_visual_map(engine)
+        
+        seenable = engine.seeker.getVision(engine.environment)
+        for i in range(len(seenable)):
+                for j in range(len(seenable[0])):
+                    if visual_map[i][j] == 0 and seenable[i][j] == 1:
+                        visual_map[i][j] = 4
         
         for row in range(total_row):
             for column in range(total_column):
@@ -123,6 +143,8 @@ if __name__=='__main__':
                     color = RED
                 elif visual_map[row][column] == 3:
                     color = GREEN
+                elif visual_map[row][column] == 4:
+                    color = PINK
                 pygame.draw.rect(screen,
                                 color,
                                 [(MARGIN + WIDTH) * column + MARGIN,
