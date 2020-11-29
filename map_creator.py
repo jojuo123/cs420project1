@@ -1,4 +1,5 @@
 import pygame
+import random
  
 # Define some colors
 BLACK = (0, 0, 0)
@@ -7,7 +8,7 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0 , 255)
 DARK_GREY = (128, 128, 128)
-MAP_FILE = "map/map2.txt"
+MAP_FILE = "map/map3.txt"
  
 # This sets the WIDTH and HEIGHT of each grid location
 WIDTH = 20
@@ -19,8 +20,8 @@ MARGIN = 5
 # Create a 2 dimensional array. A two dimensional
 # array is simply a list of lists.
 grid = []
-total_row = 20
-total_column = 20
+total_row = 30
+total_column = 30
 
 def import_map(file_name):
     file = open(file_name,"r")
@@ -38,12 +39,16 @@ def import_map(file_name):
     return total_row, total_column, data
 
 def generate_empty_map():
+
     for row in range(total_row):
         # Add an empty array that will hold each cell
         # in this row
         grid.append([])
         for column in range(total_column):
-            grid[row].append(0)  # Append a cell
+            if (random.randint(0,2) == 0):
+                grid[row].append(1)  # Append a cell
+            else:
+                grid[row].append(0)
 
 #choose 1 of 2
 total_row, total_column, grid = import_map(MAP_FILE)
@@ -75,7 +80,7 @@ clock = pygame.time.Clock()
 
 def change_status(cell):
     cell = cell + 1
-    if cell == 4:
+    if cell == 2:
         cell = 0
     return cell
 

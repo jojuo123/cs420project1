@@ -16,13 +16,13 @@ RED = (255, 0, 0)
 BLUE = (0, 0 , 255)
 DARK_GREY = (128, 128, 128)
 PINK = (255, 192, 203)
-MAX_WAIT_TIME = 0.25
-MAP_FILE = "map/map.txt"
+MAX_WAIT_TIME = 0.1
+MAP_FILE = "map/map3.txt"
  
 # This sets the WIDTH and HEIGHT of each grid location
 WIDTH = 20
 HEIGHT = 20
- 
+
 # This sets the margin between each cell
 MARGIN = 5
 
@@ -79,8 +79,8 @@ if __name__=='__main__':
     #khoi tao hider va seeker
     hiders = []
     seekpos = [1, 1]
-    seeker = seek.Seeker(1, 1, 3)
-    hiders.append(hide.Hider(1, 2, 3))
+    seeker = seek.Seeker(0, 1, 3)
+    hiders.append(hide.Hider(0, 0, 3))
     #khoi tao engine
     engine = eng.Engine(environment=environment, hiders=hiders, seeker=seeker)
 
@@ -88,8 +88,8 @@ if __name__=='__main__':
 
     test = thanh_heuristic.thanh(board)
 
-    print(engine.seeker.getVision(engine.environment))
-
+    begin = time.time()
+    check_point = begin
     # Initialize pygame
     pygame.init()
  
@@ -127,6 +127,10 @@ if __name__=='__main__':
             timing = time.time()
 
         visual_map = update_visual_map(engine)
+
+        if time.time() - check_point > 1:
+            print("Time has passed: " + str(time.time() - begin)+"s")
+            check_point = time.time()
         
         seenable = engine.seeker.getVision(engine.environment)
         for i in range(len(seenable)):
