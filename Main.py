@@ -53,12 +53,12 @@ def visualize_agents(board,seeker,hider):
     if check_valid_coor(board,seeker.position[0],seeker.position[1]):
         board[seeker.position[0]][seeker.position[1]] = 2 #might be corrected later
     else:
-        print("invalid coordinate " + str(seeker.position[0]) + ' ' + str(seeker.position[1]))
+        print("invalid seeker coordinate " + str(seeker.position[0]) + ' ' + str(seeker.position[1]))
     for i in range(len(hider)):
         if check_valid_coor(board,hider[i].position[0],hider[i].position[1]):
             board[hider[i].position[0]][hider[i].position[1]] = 3 #might be corrected later
         else:
-            print("invalid coordinate " + str(hider[i].position[0]) + ' ' + str(hider[i].position[1]))
+            print("invalid hider coordinate " + str(hider[i].position[0]) + ' ' + str(hider[i].position[1]))
     return board
 
 def update_visual_map(engine):
@@ -78,9 +78,9 @@ if __name__=='__main__':
     environment = env.Environment(board, total_row, total_column)
     #khoi tao hider va seeker
     hiders = []
-    seekpos = [1, 1]
-    seeker = seek.Seeker(0, 1, 3)
+    seeker = seek.Seeker(0, 1, 3, 5)
     hiders.append(hide.Hider(0, 0, 3))
+    hiders.append(hide.Hider(1, 6, 3))
     #khoi tao engine
     engine = eng.Engine(environment=environment, hiders=hiders, seeker=seeker)
 
@@ -138,6 +138,12 @@ if __name__=='__main__':
                     if visual_map[i][j] == 0 and seenable[i][j] == 1:
                         visual_map[i][j] = 4
         
+        seenable = engine.seeker.getVision(engine.environment)
+        for i in range(len(seenable)):
+                for j in range(len(seenable[0])):
+                    if visual_map[i][j] == 0 and seenable[i][j] == 1:
+                        visual_map[i][j] = 4
+        
         for row in range(total_row):
             for column in range(total_column):
                 color = WHITE
@@ -155,17 +161,27 @@ if __name__=='__main__':
                                 (MARGIN + HEIGHT) * row + MARGIN,
                                 WIDTH,
                                 HEIGHT])
+
+        
+        # Measure thinking time of agents (1)
+        timing = time.time()
+            
         #gameplay
         engine.play()
         done = engine.isEnd()
+
+        # Measure thinking time of agents (2)
+        wait_time = time.time() - timing
+        print("Agents move take: " + str(wait_time)+"s")
+        time.sleep(0.1)
         
-    # Limit to 60 frames per second
+        # Limit to 60 frames per second
         clock.tick(60)
  
-    # Go ahead and update the screen with what we've drawn.
+        # Go ahead and update the screen with what we've drawn.
         pygame.display.flip()
  
-    # Be IDLE friendly. If you forget this line, the program will 'hang'
-    # on exit.
+        # Be IDLE friendly. If you forget this line, the program will 'hang'
+        # on exit.
     pygame.quit()
 
