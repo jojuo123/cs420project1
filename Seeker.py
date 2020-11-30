@@ -20,9 +20,9 @@ class Seeker(ag.Agent):
     
     def move(self, environment, announceArray, visionArray):
         #pass
-        return self.moveL2AStar(environment, announceArray, visionArray)
+        #return self.moveL2AStar(environment, announceArray, visionArray)
         #return self.moveL2TSP(environment,announceArray,visionArray)
-        #return self.moveThanhHeuristic (environment, announceArray, visionArray)
+        return self.moveThanhHeuristic (environment, announceArray, visionArray)
 
     def initVisit(self, environment):
         rows = environment.rows
@@ -398,7 +398,7 @@ class Seeker(ag.Agent):
 
         # Cần sửa signature của thanh.make_move lại, visionArray nhận các vị trí hider nhìn thấy
         # Xem dòng 76 của Engine.py
-        newpos = self.thanh1.make_move(self.position[0], self.position[1], self.getVision(environment))
+        newpos = self.thanh1.make_move(self.position[0], self.position[1], self.getVision(environment), announceArray, visionArray)
         # Because newpos is tuple (... :< pair programming không để ý)
         return list(newpos)
 

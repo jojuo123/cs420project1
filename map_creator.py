@@ -8,7 +8,7 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0 , 255)
 DARK_GREY = (128, 128, 128)
-MAP_FILE = "map/map3.txt"
+MAP_FILE = "map/map5.txt"
  
 # This sets the WIDTH and HEIGHT of each grid location
 WIDTH = 20
@@ -23,19 +23,31 @@ grid = []
 total_row = 30
 total_column = 30
 
-def import_map(file_name):
-    file = open(file_name,"r")
-    total_row = int(file.readline())
-    total_column = int(file.readline())
-    lines = file.readlines()
-
+def import_map(file_name,total_row,total_column):
     data = []
-    for line in lines:
-        number_strings = line.split() # Split the line on runs of whitespace
-        numbers = [int(n) for n in number_strings] # Convert to integers
-        data.append(numbers) # Add the "row" to your list.
+    try: 
+        file = open(file_name,"r")
+    except:
+        total_row = int(input("Number of row: "))
+        total_column = int(input("Number of column: "))
+        for row in range(total_row):
+            data.append([])
+            for column in range(total_column):
+                if (random.randint(0,2) == 0):
+                    data[row].append(0)  # Append a cell
+                else:
+                    data[row].append(0)
+    else:
+        total_row = int(file.readline())
+        total_column = int(file.readline())
+        lines = file.readlines()
 
-    file.close()
+        for line in lines:
+            number_strings = line.split() # Split the line on runs of whitespace
+            numbers = [int(n) for n in number_strings] # Convert to integers
+            data.append(numbers) # Add the "row" to your list.
+
+        file.close()
     return total_row, total_column, data
 
 def generate_empty_map():
@@ -51,7 +63,7 @@ def generate_empty_map():
                 grid[row].append(0)
 
 #choose 1 of 2
-total_row, total_column, grid = import_map(MAP_FILE)
+total_row, total_column, grid = import_map(MAP_FILE,total_row,total_column)
 #generate_empty_map()
 
 
@@ -80,7 +92,7 @@ clock = pygame.time.Clock()
 
 def change_status(cell):
     cell = cell + 1
-    if cell == 2:
+    if cell == 4:
         cell = 0
     return cell
 
