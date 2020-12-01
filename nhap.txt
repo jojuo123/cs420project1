@@ -1,0 +1,20 @@
+def move (...):
+	init = self.position
+	goal = self.findGoal()
+	Chạy A* rồi trace ra road
+	lấy bước tiếp theo của road
+	self.position cập nhật theo bước tiếp theo
+
+def move (...):
+	init = self.position
+	goal = self.findGoal()
+	if (goal == cachedGoal and defined cachedRoad):
+		lấy bước tiếp theo của cachedRoad
+		cập nhật
+	else:
+		chạy A*, trace ra road
+		self.cachedRoad = road
+		self.cachedGoal = goal
+
+a b a c a d
+a b c d 
