@@ -10,6 +10,7 @@ import time
 import numpy as np
 import Obstacle as obs
 
+
 # Define some colors
 BLACK = (0, 0, 0)
 WHITE = (250, 250, 250)
