@@ -15,6 +15,10 @@ class Engine:
         self.announceList = []
         self.level = 1
         self.deadhiders = []
+        if obstacles is None:
+            self.obstacles = []
+        else:
+            self.obstacles = obstacles
         
     def TurnLimit(self):
         return self.environment.rows * self.environment.columns * 10
