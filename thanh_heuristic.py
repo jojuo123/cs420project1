@@ -201,6 +201,8 @@ class thanh:
             self.breakpoint()
             if goal_x == -1 and goal_y == -1:
                 self.request_print("neutralize all spots, terminate!!!")
+                self.restart_heuristic_map()
+                self.request_print("TRIGGER: heuristic map restart")
             else:
                 self.request_print("could not find a path to goal or already at goal")
             return -1,-1
@@ -222,6 +224,9 @@ class thanh:
         self.penalty_vision(vision_map,save_x,save_y,goal_x,goal_y)
         return save_x, save_y
 
+    def restart_heuristic_map(self):
+        self.heuristic_map = copy.deepcopy(self.heuristic_map_copy)
+
     def bonus_announce(self,announce_loc):
         self.request_print("announce bonus at " + str(announce_loc[0]))
         for k in range(len(announce_loc)):
@@ -238,10 +243,7 @@ class thanh:
             save_x,save_y = self.chase_mode(x,y,vision_map ,hider_loc)
         else:
             if announce_loc != []:
-                if announce_loc[0] != [-1,-1]:
-                    self.bonus_announce(announce_loc)
-                else:
-                    self.request_print("ahihi cu lua tu le minh")
+                self.bonus_announce(announce_loc)
             save_x,save_y = self.explore_mode(x,y,vision_map)
         if save_x == -1 and save_y == -1:
             while save_x < 0 or save_y < 0 or save_x >= self.row or save_y >= self.column or self.map[save_x][save_y]==1:
