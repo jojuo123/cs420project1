@@ -169,7 +169,8 @@ class Engine:
         if (self.level == 4):
             pushableObsAround = copy.deepcopy(self.GetObsAround())
             newObstaclePositions, seekerNextPosition = self.seeker.moveL4(self.environment, hiderSound, hiderInSight, copy.deepcopy(self.obstacles), pushableObsAround) #deepcopy ở đây là quan trọng
-            self.obstacles = copy.deepcopy(newObstaclePositions)
+            if not newObstaclePositions is None:
+                self.obstacles = copy.deepcopy(newObstaclePositions)
         else:
             seekerNextPosition = self.seeker.move(self.environment, hiderSound, hiderInSight, copy.deepcopy(self.obstacles)) #deepcopy ở đây là quan trọng
   

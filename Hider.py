@@ -31,8 +31,11 @@ class Hider(ag.Agent):
         if (seekerInSight == []):
             return 1.0
         return 0.6
+
+    def initMoveL4(self, environment, seekerInSight, obstacleArray = None, pushableAroundArray = None):     
+        return None, None #obs list mới, vị trí mới
     
-    def move(self, environment, seekerInSight, obstacleArray = None, pushableAroundArray = None):
+    def move(self, environment, seekerInSight, obstacleArray = None):
         p = self.moveProb(seekerInSight)
 
         def canMove (prob):
