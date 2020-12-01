@@ -76,7 +76,8 @@ def import_map(file_name):
     return total_row, total_column, data,seeker,hiders
 
 def check_valid_coor(board,x,y):
-    global total_row, total_column
+    total_row = len(board)
+    total_column = len(board[0])
     if x < 0 or x >= total_row:
         return False
     if y < 0 or y >= total_column:
@@ -93,6 +94,12 @@ def visualize_agents(board,seeker,hider):
             board[hider[i].position[0]][hider[i].position[1]] = 3 #might be corrected later
         #else:
         #    print("invalid hider coordinate " + str(hider[i].position[0]) + ' ' + str(hider[i].position[1]))
+    return board
+
+def visualize_obstacles(board,obs):
+    for i in range(len(obs)):
+        if check_valid_coor(board,obs[i].position[0],obs[i].position[1]):
+            board[obs[i].position[0]][obs[i].position[1]] = 4 #might be corrected later
     return board
 
 def update_visual_map(engine):

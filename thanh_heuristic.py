@@ -391,9 +391,3 @@ class thanh:
         
     def breakpoint(self):
         return
-
-            
-
-
-    
-        
