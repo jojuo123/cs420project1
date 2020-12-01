@@ -5,7 +5,10 @@ import Seeker as seek
 import Engine as eng
 import pygame
 import copy
+import thanh_heuristic
 import time
+import numpy as np
+import Obstacle as obs
 
 # Define some colors
 BLACK = (0, 0, 0)
@@ -14,12 +17,15 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0 , 255)
 DARK_GREY = (128, 128, 128)
-MAP_FILE = "map.txt"
+PINK = (255, 192, 203)
+LIGHT_GREEN = (152,251,152)
+MAX_WAIT_TIME = 0.1
+MAP_FILE = "map/map4.txt"
  
 # This sets the WIDTH and HEIGHT of each grid location
 WIDTH = 20
 HEIGHT = 20
- 
+
 # This sets the margin between each cell
 MARGIN = 5
 
@@ -36,7 +42,18 @@ def import_map(file_name):
         data.append(numbers) # Add the "row" to your list.
 
     file.close()
-    return total_row, total_column, data
+    hiders = []
+    seeker = 0
+    for i in range(total_row):
+        for j in range(total_column):
+            if data[i][j] == 2: #seeker pos
+                seeker = seek.Seeker(i,j,3,5)
+                data[i][j] = 0
+            elif data[i][j] == 3: #hider pos
+                hiders.append(hide.Hider(i,j,3))
+                data[i][j] = 0
+
+    return total_row, total_column, data,seeker,hiders
 
 def check_valid_coor(board,x,y):
     global total_row, total_column
@@ -49,42 +66,51 @@ def check_valid_coor(board,x,y):
 def visualize_agents(board,seeker,hider):
     if check_valid_coor(board,seeker.position[0],seeker.position[1]):
         board[seeker.position[0]][seeker.position[1]] = 2 #might be corrected later
-    else:
-        print("invalid coordinate " + str(seeker.position[0]) + ' ' + str(seeker.position[1]))
+    #else:
+    #    print("invalid seeker coordinate " + str(seeker.position[0]) + ' ' + str(seeker.position[1]))
     for i in range(len(hider)):
         if check_valid_coor(board,hider[i].position[0],hider[i].position[1]):
             board[hider[i].position[0]][hider[i].position[1]] = 3 #might be corrected later
-        else:
-            print("invalid coordinate " + str(hider[i].position[0]) + ' ' + str(hider[i].position[1]))
+        #else:
+        #    print("invalid hider coordinate " + str(hider[i].position[0]) + ' ' + str(hider[i].position[1]))
     return board
 
 def update_visual_map(engine):
     visual_map = []
-    visual_map = copy.deepcopy(engine.environment.board)
+    row = len(engine.environment.board) ; column = len(engine.environment.board[0])
+    for i in range(row):
+        temp = []
+        for j in range(column):
+            temp.append(engine.environment.board[i][j])
+        visual_map.append(temp)
     visual_map = visualize_agents(visual_map,engine.seeker,engine.hiders)
     return visual_map
 
 if __name__=='__main__':
     # init necessary components
+
     visual_map = []
     total_row = 0
     total_column = 0
 
     #lay map tu file 'map.txt'
-    total_row, total_column, board = import_map(MAP_FILE)
+    total_row, total_column, board, seeker, hiders = import_map(MAP_FILE)
     environment = env.Environment(board, total_row, total_column)
     #khoi tao hider va seeker
-    hiders = []
-    seeker = seek.Seeker(1, 1, 5, 5)
-    hiders.append(hide.Hider(1, 3, 3))
-    hiders.append(hide.Hider(1, 6, 3))
+    #hiders = []
+    #seeker = seek.Seeker(0, 1, 3, 5)
+    #hiders.append(hide.Hider(0, 0, 3))
+    #hiders.append(hide.Hider(29, 26, 3))
     #khoi tao engine
     engine = eng.Engine(environment=environment, hiders=hiders, seeker=seeker)
+    engine.setLevel(3)
 
     visual_map = update_visual_map(engine)
-    #total_row = len(visual_map)
-    #total_column = len(visual_map[0])
 
+    test = thanh_heuristic.thanh(board)
+
+    begin = time.time()
+    check_point = begin
     # Initialize pygame
     pygame.init()
  
@@ -104,6 +130,8 @@ if __name__=='__main__':
     clock = pygame.time.Clock()
 
     #main loop
+    timing = time.time()
+    debug = True
     while not done:
         for event in pygame.event.get():  # User did something
             if event.type == pygame.QUIT:  # If user clicked close
@@ -112,7 +140,31 @@ if __name__=='__main__':
             break
         screen.fill(BLACK)
 
+        #wait_time = time.time() - timing
+        #if time.time() - timing >= MAX_WAIT_TIME:
+        #    seenable = engine.seeker.getVision(engine.environment)
+
+        #    engine.seeker.position[0], engine.seeker.position[1] = test.make_move(engine.seeker.position[0],engine.seeker.position[1],seenable,[],[])
+        #    timing = time.time()
+
         visual_map = update_visual_map(engine)
+
+        #if time.time() - check_point > 1:
+        #    print("Time has passed: " + str(time.time() - begin)+"s")
+        #    check_point = time.time()
+        
+        seenable = engine.seeker.getVision(engine.environment)
+        for i in range(len(seenable)):
+                for j in range(len(seenable[0])):
+                    if visual_map[i][j] == 0 and seenable[i][j] == 1:
+                        visual_map[i][j] = 4
+        
+        for i in range(len(engine.hiders)):
+            seenable = engine.hiders[0].getVision(engine.environment)
+            for i in range(len(seenable)):
+                    for j in range(len(seenable[0])):
+                        if visual_map[i][j] == 0 and seenable[i][j] == 1:
+                            visual_map[i][j] = 5
         
         for row in range(total_row):
             for column in range(total_column):
@@ -123,24 +175,42 @@ if __name__=='__main__':
                     color = RED
                 elif visual_map[row][column] == 3:
                     color = GREEN
+                elif visual_map[row][column] == 4:
+                    color = PINK
+                elif visual_map[row][column] == 5:
+                    color = LIGHT_GREEN
                 pygame.draw.rect(screen,
                                 color,
                                 [(MARGIN + WIDTH) * column + MARGIN,
                                 (MARGIN + HEIGHT) * row + MARGIN,
                                 WIDTH,
                                 HEIGHT])
-        #gameplay
-        engine.play()
-        time.sleep(0.5)
-        done = engine.isEnd()
+
         
-    # Limit to 60 frames per second
+        # Measure thinking time of agents (1)
+        #timing = time.time()
+            
+        #gameplay
+        wait_time = time.time() - timing
+        if time.time() - timing >= MAX_WAIT_TIME:
+            timing = time.time()
+            engine.play()
+            done = engine.isEnd()
+            if done:
+                print("Time has passed: " + str(time.time() - begin)+"s")
+
+        # Measure thinking time of agents (2)
+        wait_time = time.time() - timing
+        #print("Agents move take: " + str(wait_time)+"s")
+        #time.sleep(0.1)
+        
+        # Limit to 60 frames per second
         clock.tick(60)
  
-    # Go ahead and update the screen with what we've drawn.
+        # Go ahead and update the screen with what we've drawn.
         pygame.display.flip()
  
-    # Be IDLE friendly. If you forget this line, the program will 'hang'
-    # on exit.
+        # Be IDLE friendly. If you forget this line, the program will 'hang'
+        # on exit.
     pygame.quit()
 

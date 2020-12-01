@@ -1,9 +1,11 @@
 import Agent as ag
 import random
+import Obstacle as obs
 
 class Hider(ag.Agent):
     def __init__(self, positionx, positiony, sight):
         self.prob = 0.0
+        self.moveRandomGoal_goal = None
         super().__init__(positionx, positiony, sight)
     
     def Dead(self):
@@ -26,11 +28,21 @@ class Hider(ag.Agent):
             return None
     
     def moveProb(self, seekerInSight):
-        return 0.0
+        if (seekerInSight == []):
+            return 1.0
+        return 0.6
     
-    def move(self, environment, seekerInSight):
+    def move(self, environment, seekerInSight, obstacleArray = None, pushableAroundArray = None):
         p = self.moveProb(seekerInSight)
-        pass
+
+        def canMove (prob):
+            rnd=random.random()
+            return rnd<prob
+        if not canMove(prob=p):     # Hider won't move this turn
+            return None
+
+        #return self.moveRandomDirection (environment, seekerInSight) # Now move random
+        return self.moveRandomGoalAStar (environment, seekerInSight)
 
     def getVision(self, environment):
         #return mang 2d {0,1} 
@@ -102,6 +114,12 @@ class Hider(ag.Agent):
             if obstacle(c[3]):
                 setCell(c[14],0)
 
+            # New rule, appended
+            if obstacle(c[1]) and obstacle(c[2]):
+                setCell(c[5],0)
+            if obstacle(c[2]) and obstacle(c[3]):
+                setCell(c[7],0)
+
 
         c = genCell(self.position, 1, 1)
         considerVision(c)
@@ -114,3 +132,98 @@ class Hider(ag.Agent):
 
         return a
         
+    def moveRandomDirection(self, environment, seekerInSight):
+        def inside (r, c):
+            nr, nc=[environment.rows, environment.columns]
+            return r>=0 and r<nr and c>=0 and c<nc
+        dr=[-1,0,1,1,1,0,-1,-1,0]
+        dc=[0,-1,-1,-1,0,1,1,1,0]
+        r,c=self.position
+        while (True):
+            dir=random.randint(0,len(dr)-1)
+            if (inside(r+dr[dir],c+dc[dir]) and environment.board[r+dr[dir]][c+dc[dir]] != 1):
+                return [r+dr[dir],c+dc[dir]]
+            else:
+                dr.pop(dir)
+                dc.pop(dir)
+        return [0,0]
+        
+
+    def moveRandomGoalAStar(self, environment, seekerInSight):
+        nr, nc=[environment.rows, environment.columns]
+
+        def inside (r, c):    
+            return r>=0 and r<nr and c>=0 and c<nc
+        def iswall (r, c):
+            return environment.board[r][c] == 1
+        
+        dr=[-1,0,1,1,1,0,-1,-1]
+        dc=[0,-1,-1,-1,0,1,1,1]
+        def heuristic (x, y, xp, yp):
+            return max(abs(x-xp), abs(y-yp))
+
+        def direct_to_goal (init, goal):
+            gr, gc = goal
+            r,c = init
+            init_r, init_c = init
+            # Now A Star to goal      
+            parent=[]; cost=[]
+            frontier=[]
+
+            for i in range(nr):
+                tmp=[]; tmp2=[]
+                for j in range(nc):
+                    tmp.append([]); tmp2.append(999999)
+                parent.append(tmp); cost.append(tmp2)
+
+            cost[r][c]=0; frontier.append([r,c])
+
+            def deadend():
+                return parent[gr][gc] != []
+
+            # Cost is g
+            while (frontier!=[] and not deadend()):
+                Min=999999
+                r,c=frontier[0];i=0
+                for j in range(len(frontier)):
+                    f=frontier[j]
+                    if (cost[f[0]][f[1]]+heuristic(f[0],f[1],gr,gc) < Min):
+                        Min=cost[f[0]][f[1]]+heuristic(f[0],f[1],gr,gc)
+                        r,c=f
+                        i=j
+                frontier.pop(i)
+
+                for k in range(len(dr)):
+                    rr=r+dr[k]; cc=c+dc[k]
+                    if inside(rr,cc) and not iswall(rr,cc) and cost[r][c]+1 < cost[rr][cc]:
+                        cost[rr][cc]=cost[r][c]+1
+                        parent[rr][cc]=[r,c]
+                        frontier.append([rr,cc])
+            
+            if (parent[gr][gc] == []):  # No way to reach goal
+                return [-1,-1]    # Continue finding another goal
+            trace_x,trace_y = [gr, gc]
+            save_x = -1; save_y = -1
+            while True:
+                save_x, save_y = parent[trace_x][trace_y]
+                if save_x == init_r and save_y == init_c:
+                    break
+                trace_x = save_x; trace_y = save_y
+
+            return [trace_x,trace_y]
+
+        def findGoal ():
+            while True :
+                r=random.randint(0,nr-1); c=random.randint(0,nc-1)
+                if not iswall(r,c):
+                    return [r,c]
+
+        if (self.moveRandomGoal_goal is None) or self.position==self.moveRandomGoal_goal:
+            while True:
+                self.moveRandomGoal_goal = findGoal()
+                if (self.position == self.moveRandomGoal_goal):
+                    continue
+                if direct_to_goal(self.position, self.moveRandomGoal_goal) != [-1,-1]:
+                    #print("Hider next goal: ",str(self.moveRandomGoal_goal))
+                    break
+        return direct_to_goal(self.position, self.moveRandomGoal_goal)
