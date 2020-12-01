@@ -7,7 +7,10 @@ class Hider(ag.Agent):
         super().__init__(positionx, positiony, sight)
     
     def Dead(self):
+        x = self.position[0]
+        y = self.position[1]
         self.position = [-1, -1]
+        return x,y
     
     def AnnouncePosition(self):
         return self.position

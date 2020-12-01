@@ -70,7 +70,7 @@ class Engine:
         self.UpdateScore()
         seekVision = self.seeker.getVision(self.environment)
         hiderInSight = self.showSight(seekVision, isSeeker=True)
-        print(hiderInSight)
+        #print(hiderInSight)
         hiderSound = self.showAnnounce(self.announceList, self.seeker.position, self.seeker.soundRange)
 
         seekerNextPosition = self.seeker.move(self.environment, hiderSound, hiderInSight)

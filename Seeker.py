@@ -3,6 +3,7 @@ from heapq import heappush, heappop, heapify
 import math
 import random
 from queue import Queue
+import thanh_heuristic
 class Seeker(ag.Agent):
     # def __init__(self, positionx, positiony, sight):
     #     self.soundRange = sight
@@ -14,12 +15,14 @@ class Seeker(ag.Agent):
         self.soundRange = soundRange
         self.memory = None
         self.memo=None
+        self.thanh1=None
         super().__init__(positionx, positiony, sight)
     
     def move(self, environment, announceArray, visionArray):
         #pass
         #return self.moveL2AStar(environment, announceArray, visionArray)
-        return self.moveL2TSP(environment,announceArray,visionArray)
+        #return self.moveL2TSP(environment,announceArray,visionArray)
+        return self.moveThanhHeuristic (environment, announceArray, visionArray)
 
     def initVisit(self, environment):
         rows = environment.rows
@@ -230,6 +233,11 @@ class Seeker(ag.Agent):
             if obstacle(c[3]):
                 setCell(c[14],0)
 
+            # New rule, appended
+            if obstacle(c[1]) and obstacle(c[2]):
+                setCell(c[5],0)
+            if obstacle(c[2]) and obstacle(c[3]):
+                setCell(c[7],0)
 
         c = genCell(self.position, 1, 1)
         considerVision(c)
@@ -369,10 +377,10 @@ class Seeker(ag.Agent):
             if memo.route:
                 # print("memo.tsp len = "+str(len(memo.tsp)))
                 nextloc=memo.route.pop()
-                self.position=nextloc
+                return nextloc
             else:
                 # Stay still (we went all the way --> some hiders are unreachable)
-                pass
+                return None
 
 
         if firstTurnFlag == True:
@@ -382,5 +390,15 @@ class Seeker(ag.Agent):
             DFS()
             Eulerian()
             TSP_v2()
-        go()
-        return None
+        return go()
+    
+    def moveThanhHeuristic (self, environment, announceArray, visionArray):
+        if self.thanh1 is None:
+            self.thanh1 = thanh_heuristic.thanh(environment.board)
+
+        # Cần sửa signature của thanh.make_move lại, visionArray nhận các vị trí hider nhìn thấy
+        # Xem dòng 76 của Engine.py
+        newpos = self.thanh1.make_move(self.position[0], self.position[1], self.getVision(environment), announceArray, visionArray)
+        # Because newpos is tuple (... :< pair programming không để ý)
+        return list(newpos)
+
