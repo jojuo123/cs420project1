@@ -204,7 +204,7 @@ class thanh:
             else:
                 self.request_print("could not find a path to goal or already at goal")
             return -1,-1
-        self.request_print("next goal: " + str(str(goal_x) + ' ' + str(goal_y) + ' ' + str(self.heuristic_map[goal_x,goal_y])))
+        self.request_print("next goal: " + str(goal_x) + ' ' + str(goal_y) + ' ' + str(self.heuristic_map[goal_x,goal_y]))
 
         #self.bonus_each_round()
         self.write_log()
