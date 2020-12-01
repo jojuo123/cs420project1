@@ -8,6 +8,14 @@ import copy
 import thanh_heuristic
 import time
 import numpy as np
+import os
+
+base= os.path.basename("D:\CODES\CS420\cs420project1\map\level1\*.txt")
+print(base)
+os.path.splitext(base)
+('file', '.txt')
+os.path.splitext(base)[0]
+print(base)
 
 # Define some colors
 BLACK = (0, 0, 0)
@@ -18,15 +26,22 @@ BLUE = (0, 0 , 255)
 DARK_GREY = (128, 128, 128)
 PINK = (255, 192, 203)
 LIGHT_GREEN = (152,251,152)
+LIGHT_CYAN = (224,255,255)
 MAX_WAIT_TIME = 0.1
-MAP_FILE = "map/map2.txt"
+MAP_FILE = "map/map5.txt"
  
 # This sets the WIDTH and HEIGHT of each grid location
 WIDTH = 20
 HEIGHT = 20
 
 # This sets the margin between each cell
-MARGIN = 5
+MARGIN = 1
+
+def get_file():
+    file_name = ""
+    level = int(input("choose level: "))
+    
+    return file_name
 
 def import_map(file_name):
     file = open(file_name,"r")
@@ -49,7 +64,7 @@ def import_map(file_name):
                 seeker = seek.Seeker(i,j,3,5)
                 data[i][j] = 0
             elif data[i][j] == 3: #hider pos
-                hiders.append(hide.Hider(i,j,3))
+                hiders.append(hide.Hider(i,j,2))
                 data[i][j] = 0
 
     return total_row, total_column, data,seeker,hiders
@@ -155,14 +170,14 @@ if __name__=='__main__':
         for i in range(len(seenable)):
                 for j in range(len(seenable[0])):
                     if visual_map[i][j] == 0 and seenable[i][j] == 1:
-                        visual_map[i][j] = 4
+                        visual_map[i][j] = 998
         
         for i in range(len(engine.hiders)):
-            seenable = engine.hiders[0].getVision(engine.environment)
+            seenable = engine.hiders[i].getVision(engine.environment)
             for i in range(len(seenable)):
                     for j in range(len(seenable[0])):
                         if visual_map[i][j] == 0 and seenable[i][j] == 1:
-                            visual_map[i][j] = 5
+                            visual_map[i][j] = 999
         
         for row in range(total_row):
             for column in range(total_column):
@@ -173,10 +188,10 @@ if __name__=='__main__':
                     color = RED
                 elif visual_map[row][column] == 3:
                     color = GREEN
-                elif visual_map[row][column] == 4:
+                elif visual_map[row][column] == 998:
                     color = PINK
-                elif visual_map[row][column] == 5:
-                    color = LIGHT_GREEN
+                elif visual_map[row][column] == 999:
+                    color = LIGHT_CYAN
                 pygame.draw.rect(screen,
                                 color,
                                 [(MARGIN + WIDTH) * column + MARGIN,
