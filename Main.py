@@ -8,6 +8,8 @@ import copy
 import thanh_heuristic
 import time
 import numpy as np
+import Obstacle as obs
+
 
 # Define some colors
 BLACK = (0, 0, 0)
@@ -87,6 +89,7 @@ def update_visual_map(engine):
 
 if __name__=='__main__':
     # init necessary components
+
     visual_map = []
     total_row = 0
     total_column = 0

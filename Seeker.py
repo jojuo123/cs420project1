@@ -2,6 +2,8 @@ import Agent as ag
 from heapq import heappush, heappop, heapify
 import math
 import random
+import Obstacle as obs
+
 from queue import Queue
 import thanh_heuristic
 class Seeker(ag.Agent):
@@ -18,7 +20,14 @@ class Seeker(ag.Agent):
         self.thanh1=None
         super().__init__(positionx, positiony, sight)
     
-    def move(self, environment, announceArray, visionArray):
+    def moveL4(self, environment, announceArray, visionArray, obstacleArray = None, pushableAroundArray = None):
+        #pass
+        #return self.moveL2AStar(environment, announceArray, visionArray)
+        #return self.moveL2TSP(environment,announceArray,visionArray)
+
+        return None, None
+    
+    def move(self, environment, announceArray, visionArray, obstacleArray = None):
         #pass
         #return self.moveL2AStar(environment, announceArray, visionArray)
         #return self.moveL2TSP(environment,announceArray,visionArray)

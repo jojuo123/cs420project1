@@ -1,5 +1,6 @@
 import copy
 import Environment
+import Obstacle as obs
 
 class Agent:
     def __init__(self, positionx, positiony, sight):
