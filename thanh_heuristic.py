@@ -244,7 +244,7 @@ class thanh:
                     self.request_print("ahihi cu lua tu le minh")
             save_x,save_y = self.explore_mode(x,y,vision_map)
         if save_x == -1 and save_y == -1:
-            while save_x < 0 or save_y < 0 or save_x >= self.row or save_y >= self.column or self.map[x][y] == 1:
+            while save_x < 0 or save_y < 0 or save_x >= self.row or save_y >= self.column or self.map[save_x][save_y]==1:
                 count = random.randint(0,7)
                 save_x = x + self.move_x[count] ; save_y = y + self.move_y[count]
             self.request_print("random step taken at: " + str(save_x) + ' ' + str(save_y))

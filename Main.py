@@ -101,6 +101,7 @@ if __name__=='__main__':
     #hiders.append(hide.Hider(29, 26, 3))
     #khoi tao engine
     engine = eng.Engine(environment=environment, hiders=hiders, seeker=seeker)
+    engine.setLevel(3)
 
     visual_map = update_visual_map(engine)
 

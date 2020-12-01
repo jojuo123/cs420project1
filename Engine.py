@@ -13,6 +13,7 @@ class Engine:
         self.turn = 0
         self.announceList = []
         self.level = 1
+        self.deadhiders = []
 
     def setLevel(self, level):
         self.level = level
@@ -77,16 +78,33 @@ class Engine:
         #print(self.turn, seekerNextPosition)
         if not seekerNextPosition is None:
             self.seeker.position = copy.deepcopy(seekerNextPosition)
-            #print(self.seeker.position)
+        #print("Seeker move to: ",str(self.seeker.position))
+        #print(self.seeker.position)
         self.announceList = []
         for hider in self.hiders:
             if self.checkDie(self.seeker, hider):
                 hider.Dead()
                 self.UpdateScore(True)
+                self.deadhiders.append(hider)
+                self.hiders.remove(hider)
                 continue
             hiderVision = hider.getVision(self.environment)
             seekerInSight = self.showSight(visionMap=hiderVision, isSeeker=False)
-            #nextPosition = copy.deepcopy(hider.move(...))
+
+            if (self.level == 3):
+                hiderNextPosition = hider.move(self.environment, seekerInSight)
+                #nextPosition = copy.deepcopy(hider.move(...))
+                if not hiderNextPosition is None:
+                    hider.position = copy.deepcopy(hiderNextPosition)
+                #print("Hider move to: ",str(hider.position))
+                #print("Hider position: "+str(hider.position))
+                # Check for hider-suicide
+                if self.checkDie(self.seeker, hider):
+                    hider.Dead()
+                    self.UpdateScore(True)
+                    self.deadhiders.append(hider)
+                    self.hiders.remove(hider)
+                    continue
             announcePosition = hider.Announce()
             if not announcePosition is None:
                 self.announceList.append(copy.deepcopy(announcePosition))
