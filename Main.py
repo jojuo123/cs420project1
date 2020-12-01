@@ -10,13 +10,6 @@ import time
 import numpy as np
 import os
 
-base= os.path.basename("D:\CODES\CS420\cs420project1\map\level1\*.txt")
-print(base)
-os.path.splitext(base)
-('file', '.txt')
-os.path.splitext(base)[0]
-print(base)
-
 # Define some colors
 BLACK = (0, 0, 0)
 WHITE = (250, 250, 250)
@@ -27,8 +20,13 @@ DARK_GREY = (128, 128, 128)
 PINK = (255, 192, 203)
 LIGHT_GREEN = (152,251,152)
 LIGHT_CYAN = (224,255,255)
-MAX_WAIT_TIME = 0.1
-MAP_FILE = "map/map5.txt"
+WOOD = (202,164,114)
+#gameplay constant
+MAP_FILE = ""
+MAX_WAIT_TIME = 0
+TURN_LIMIT = 200
+TIME_LIMIT = 200
+CURRENT_TURN = 0
  
 # This sets the WIDTH and HEIGHT of each grid location
 WIDTH = 20
@@ -38,10 +36,18 @@ HEIGHT = 20
 MARGIN = 1
 
 def get_file():
-    file_name = ""
+    file_name = "map/level"
     level = int(input("choose level: "))
     
-    return file_name
+    file_name += str(level) + '/'
+    entries = os.listdir(file_name)
+
+    for i in range(len(entries)):
+        print(i+1, entries[i])
+    file_num = int(input("choose file number: "))
+    file_name += entries[file_num-1]
+    
+    return file_name,level
 
 def import_map(file_name):
     file = open(file_name,"r")
@@ -100,11 +106,29 @@ def update_visual_map(engine):
     visual_map = visualize_agents(visual_map,engine.seeker,engine.hiders)
     return visual_map
 
+def set_caption(level, time, time_limit, score):
+    return "Level: " + str(level) + " Time: " + str(time) + " Time_limit: " + str(time_limit) + 's' + " Score: " + str(score)
+
+def print_summary(level,file_path,status, total_run_time, score, seeker_steps, turn_limit, time_limit):
+    print("\n\n\n\n-----------------------------------------------------------------------")
+    print("Game status: " + str(status))
+    print("Level: " + str(level))
+    print("File path: " + str(file_path))
+    print("\nTime limit: " + str(time_limit) + 's')
+    print("Total run time: " + str(total_run_time))
+    print("\nTurn limit: " + str(turn_limit))
+    print("Seeker steps: " + str(seeker_steps))
+    print("\nSeeker score: " + str(score))
+    print("\n\n\n\n\n\n-----------------------------------------------------------------------")
+
+
+
 if __name__=='__main__':
     # init necessary components
     visual_map = []
     total_row = 0
     total_column = 0
+    MAP_FILE, engine_level = get_file()
 
     #lay map tu file 'map.txt'
     total_row, total_column, board, seeker, hiders = import_map(MAP_FILE)
@@ -116,11 +140,9 @@ if __name__=='__main__':
     #hiders.append(hide.Hider(29, 26, 3))
     #khoi tao engine
     engine = eng.Engine(environment=environment, hiders=hiders, seeker=seeker)
-    engine.setLevel(3)
+    engine.setLevel(engine_level)
 
     visual_map = update_visual_map(engine)
-
-    test = thanh_heuristic.thanh(board)
 
     begin = time.time()
     check_point = begin
@@ -153,31 +175,49 @@ if __name__=='__main__':
             break
         screen.fill(BLACK)
 
-        #wait_time = time.time() - timing
-        #if time.time() - timing >= MAX_WAIT_TIME:
-        #    seenable = engine.seeker.getVision(engine.environment)
-
-        #    engine.seeker.position[0], engine.seeker.position[1] = test.make_move(engine.seeker.position[0],engine.seeker.position[1],seenable,[],[])
-        #    timing = time.time()
-
         visual_map = update_visual_map(engine)
-
-        #if time.time() - check_point > 1:
-        #    print("Time has passed: " + str(time.time() - begin)+"s")
-        #    check_point = time.time()
         
+        #seeker vision
         seenable = engine.seeker.getVision(engine.environment)
         for i in range(len(seenable)):
                 for j in range(len(seenable[0])):
                     if visual_map[i][j] == 0 and seenable[i][j] == 1:
                         visual_map[i][j] = 998
         
+        #hider vision
         for i in range(len(engine.hiders)):
             seenable = engine.hiders[i].getVision(engine.environment)
             for i in range(len(seenable)):
                     for j in range(len(seenable[0])):
                         if visual_map[i][j] == 0 and seenable[i][j] == 1:
                             visual_map[i][j] = 999
+
+        #gameplay
+        wait_time = time.time() - timing
+        if time.time() - timing >= MAX_WAIT_TIME:
+            #set caption
+            timing = time.time()
+            time_passed = str("%.2f" % (time.time() - begin)) + "s"
+            score = engine.score
+            caption = set_caption(engine_level,time_passed,TIME_LIMIT,score)
+            pygame.display.set_caption(caption)
+
+            #engine do
+            CURRENT_TURN += 1
+            engine.play()
+            done = engine.isEnd()
+            seeker_score = engine.score
+            curr_time = int(time.time() - begin)
+            time_passed = str("%.2f" % (time.time() - begin)) + "s"
+            if done or CURRENT_TURN >= TURN_LIMIT or curr_time >= TIME_LIMIT:
+                if CURRENT_TURN >= TURN_LIMIT:
+                    status = "SEEKER RUNS OUT OF TURN"
+                elif curr_time >= TIME_LIMIT:
+                    status = "SEEKER RUNS OUT OF TIME"
+                else:
+                    status = "SEEKER COMPLETES THIS ROUND"
+                print_summary(engine_level, MAP_FILE, status, time_passed,score,CURRENT_TURN,TURN_LIMIT,TIME_LIMIT)
+                done = True
         
         for row in range(total_row):
             for column in range(total_column):
@@ -188,6 +228,8 @@ if __name__=='__main__':
                     color = RED
                 elif visual_map[row][column] == 3:
                     color = GREEN
+                elif visual_map[row][column] == 4:
+                    color = WOOD
                 elif visual_map[row][column] == 998:
                     color = PINK
                 elif visual_map[row][column] == 999:
@@ -198,24 +240,6 @@ if __name__=='__main__':
                                 (MARGIN + HEIGHT) * row + MARGIN,
                                 WIDTH,
                                 HEIGHT])
-
-        
-        # Measure thinking time of agents (1)
-        #timing = time.time()
-            
-        #gameplay
-        wait_time = time.time() - timing
-        if time.time() - timing >= MAX_WAIT_TIME:
-            timing = time.time()
-            engine.play()
-            done = engine.isEnd()
-            if done:
-                print("Time has passed: " + str(time.time() - begin)+"s")
-
-        # Measure thinking time of agents (2)
-        wait_time = time.time() - timing
-        #print("Agents move take: " + str(wait_time)+"s")
-        #time.sleep(0.1)
         
         # Limit to 60 frames per second
         clock.tick(60)
@@ -226,4 +250,6 @@ if __name__=='__main__':
         # Be IDLE friendly. If you forget this line, the program will 'hang'
         # on exit.
     pygame.quit()
+
+
 
