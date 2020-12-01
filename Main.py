@@ -17,8 +17,9 @@ RED = (255, 0, 0)
 BLUE = (0, 0 , 255)
 DARK_GREY = (128, 128, 128)
 PINK = (255, 192, 203)
+LIGHT_GREEN = (152,251,152)
 MAX_WAIT_TIME = 0.1
-MAP_FILE = "map/map3.txt"
+MAP_FILE = "map/map2.txt"
  
 # This sets the WIDTH and HEIGHT of each grid location
 WIDTH = 20
@@ -155,11 +156,12 @@ if __name__=='__main__':
                     if visual_map[i][j] == 0 and seenable[i][j] == 1:
                         visual_map[i][j] = 4
         
-        seenable = engine.seeker.getVision(engine.environment)
-        for i in range(len(seenable)):
-                for j in range(len(seenable[0])):
-                    if visual_map[i][j] == 0 and seenable[i][j] == 1:
-                        visual_map[i][j] = 4
+        for i in range(len(engine.hiders)):
+            seenable = engine.hiders[0].getVision(engine.environment)
+            for i in range(len(seenable)):
+                    for j in range(len(seenable[0])):
+                        if visual_map[i][j] == 0 and seenable[i][j] == 1:
+                            visual_map[i][j] = 5
         
         for row in range(total_row):
             for column in range(total_column):
@@ -172,6 +174,8 @@ if __name__=='__main__':
                     color = GREEN
                 elif visual_map[row][column] == 4:
                     color = PINK
+                elif visual_map[row][column] == 5:
+                    color = LIGHT_GREEN
                 pygame.draw.rect(screen,
                                 color,
                                 [(MARGIN + WIDTH) * column + MARGIN,
@@ -181,16 +185,21 @@ if __name__=='__main__':
 
         
         # Measure thinking time of agents (1)
-        timing = time.time()
+        #timing = time.time()
             
         #gameplay
-        engine.play()
-        done = engine.isEnd()
+        wait_time = time.time() - timing
+        if time.time() - timing >= MAX_WAIT_TIME:
+            timing = time.time()
+            engine.play()
+            done = engine.isEnd()
+            if done:
+                print("Time has passed: " + str(time.time() - begin)+"s")
 
         # Measure thinking time of agents (2)
         wait_time = time.time() - timing
         #print("Agents move take: " + str(wait_time)+"s")
-        time.sleep(0.1)
+        #time.sleep(0.1)
         
         # Limit to 60 frames per second
         clock.tick(60)
