@@ -66,6 +66,8 @@ def import_map(file_name):
     file.close()
     hiders = []
     seeker = 0
+    obs_list = []
+    checked_obs = np.zeros((total_row,total_column))
     for i in range(total_row):
         for j in range(total_column):
             if data[i][j] == 2: #seeker pos
@@ -74,8 +76,38 @@ def import_map(file_name):
             elif data[i][j] == 3: #hider pos
                 hiders.append(hide.Hider(i,j,2))
                 data[i][j] = 0
+            elif data[i][j] == 4 and checked_obs[i][j] != 1: #obs
+                obs_,checked_obs = find_obs(data,i,j,checked_obs)
+                obs_list.append(obs_)
 
-    return total_row, total_column, data,seeker,hiders
+    return total_row, total_column, data,seeker,hiders,obs_list
+
+def find_obs(data,x,y,checked_obs):
+    upper_left = [x,y]
+    total_row = len(data)
+    total_column = len(data[0])
+    size_row = 0
+    size_col = 0
+    xx = x ; yy = y
+    while yy < total_column and data[xx][yy] == 4:
+        if checked_obs[xx][yy] == 0:
+            checked_obs[xx][yy] = 1
+            size_col += 1
+        yy += 1
+    xx = x+1 ; yy = y
+    if size_col <= 1:
+        size_row = 1
+        while xx < total_row and data[xx][yy] == 4:
+            if checked_obs[xx][yy] == 0 :
+                checked_obs[xx][yy] = 1
+                size_row += 1
+            xx += 1
+        return obs.Obstacle(upper_left,[size_row,size_col],WOOD),checked_obs
+    else:
+        size_row = 1
+        return obs.Obstacle(upper_left,[size_row,size_col],WOOD),checked_obs
+
+
 
 def check_valid_coor(board,x,y):
     total_row = len(board)
@@ -98,10 +130,12 @@ def visualize_agents(board,seeker,hider):
         #    print("invalid hider coordinate " + str(hider[i].position[0]) + ' ' + str(hider[i].position[1]))
     return board
 
-def visualize_obstacles(board,obs):
-    for i in range(len(obs)):
-        if check_valid_coor(board,obs[i].position[0],obs[i].position[1]):
-            board[obs[i].position[0]][obs[i].position[1]] = 4 #might be corrected later
+def visualize_obstacles(board,obs_list):
+    for i in range(len(obs_list)):
+        for j in range(obs_list[i].size[0]):
+            for k in range(obs_list[i].size[1]):
+                if check_valid_coor(board,obs_list[i].upperLeft[0]+j, obs_list[i].upperLeft[1]+k):
+                    board[obs_list[i].upperLeft[0]+j][obs_list[i].upperLeft[1]+k] = 4 #might be corrected later
     return board
 
 def update_visual_map(engine):
@@ -113,6 +147,7 @@ def update_visual_map(engine):
             temp.append(engine.environment.board[i][j])
         visual_map.append(temp)
     visual_map = visualize_agents(visual_map,engine.seeker,engine.hiders)
+    visual_map = visualize_obstacles(visual_map,engine.obstacles)
     return visual_map
 
 def set_caption(level, time, time_limit, score):
@@ -141,7 +176,7 @@ if __name__=='__main__':
     MAP_FILE, engine_level = get_file()
 
     #lay map tu file 'map.txt'
-    total_row, total_column, board, seeker, hiders = import_map(MAP_FILE)
+    total_row, total_column, board, seeker, hiders,obs_list = import_map(MAP_FILE)
     environment = env.Environment(board, total_row, total_column)
     #khoi tao hider va seeker
     #hiders = []
@@ -149,7 +184,7 @@ if __name__=='__main__':
     #hiders.append(hide.Hider(0, 0, 3))
     #hiders.append(hide.Hider(29, 26, 3))
     #khoi tao engine
-    engine = eng.Engine(environment=environment, hiders=hiders, seeker=seeker)
+    engine = eng.Engine(environment=environment, hiders=hiders, seeker=seeker,obstacles = obs_list)
     engine.setLevel(engine_level)
 
     visual_map = update_visual_map(engine)
