@@ -8,7 +8,8 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0 , 255)
 DARK_GREY = (128, 128, 128)
-MAP_FILE = "map/mmap2.txt"
+WOOD = (202,164,114)
+MAP_FILE = "map/level4/mmap.txt"
  
 # This sets the WIDTH and HEIGHT of each grid location
 WIDTH = 20
@@ -92,7 +93,7 @@ clock = pygame.time.Clock()
 
 def change_status(cell):
     cell = cell + 1
-    if cell == 4:
+    if cell == 5:
         cell = 0
     return cell
 
@@ -136,6 +137,8 @@ while not done:
                 color = RED
             elif grid[row][column] == 3:
                 color = GREEN
+            elif grid[row][column] == 4:
+                color = WOOD
             pygame.draw.rect(screen,
                              color,
                              [(MARGIN + WIDTH) * column + MARGIN,
