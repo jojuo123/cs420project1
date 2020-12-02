@@ -287,6 +287,7 @@ if __name__=='__main__':
                                 HEIGHT])
         
         # Limit to 60 frames per second
+        time.sleep(0.1)
         clock.tick(60)
  
         # Go ahead and update the screen with what we've drawn.
