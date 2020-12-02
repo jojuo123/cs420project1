@@ -9,6 +9,8 @@ import thanh_heuristic
 import time
 import numpy as np
 import os
+import Obstacle as obs
+
 
 # Define some colors
 BLACK = (0, 0, 0)
@@ -132,6 +134,7 @@ def print_summary(level,file_path,status, total_run_time, score, seeker_steps, t
 
 if __name__=='__main__':
     # init necessary components
+
     visual_map = []
     total_row = 0
     total_column = 0
