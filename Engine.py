@@ -27,7 +27,6 @@ class Engine:
     def TurnLimitForHider(self):
         return 20
 
-
     def setLevel(self, level):
         self.level = level
 
@@ -172,7 +171,7 @@ class Engine:
 
         seekerNextPosition = []
         if (self.level == 4):
-            pushableObsAround = copy.deepcopy(self.GetObsAround())
+            pushableObsAround = copy.deepcopy(self.GetObsAround(self.seeker.position))
             newObstaclePositions, seekerNextPosition = self.seeker.moveL4(self.environment, hiderSound, hiderInSight, copy.deepcopy(self.obstacles), pushableObsAround) #deepcopy ở đây là quan trọng
             if not newObstaclePositions is None:
                 self.obstacles = copy.deepcopy(newObstaclePositions)
@@ -193,12 +192,10 @@ class Engine:
                 self.hiders.remove(hider)
                 continue
             hiderVision = hider.getVision(self.environment)
-
             seekerInSight = self.showSight(visionMap=hiderVision, isSeeker=False, prevSeekerPosition=prevSeekerPosition)
 
             if (self.level >= 3):
                 hiderNextPosition = hider.move(self.environment, seekerInSight, obstacleArray=copy.deepcopy(self.obstacles)) #deepcopy ở đây là quan trọng
-
                 #nextPosition = copy.deepcopy(hider.move(...))
                 if not hiderNextPosition is None:
                     hider.position = copy.deepcopy(hiderNextPosition)
