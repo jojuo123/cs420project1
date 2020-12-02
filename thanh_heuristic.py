@@ -230,7 +230,7 @@ class thanh:
                     x = curr_x + i
                     y = curr_y + j
                     if x >= 0 and x < self.row and y >= 0 and y < self.column and self.map[x][y] == 0:
-                        self.heuristic_map[x][y] -= 2
+                        self.heuristic_map[x][y] -= self.basic_heuristic[x][y]/10
 
     def make_move(self, x, y, vision_map, announce_loc, hider_loc):
         if hider_loc != []:
