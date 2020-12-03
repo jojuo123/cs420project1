@@ -25,7 +25,7 @@ LIGHT_CYAN = (224,255,255)
 WOOD = (202,164,114)
 #gameplay constant
 MAP_FILE = ""
-MAX_WAIT_TIME = 0
+MAX_WAIT_TIME = 0.1
 TURN_LIMIT = 2000
 TIME_LIMIT = 200
 CURRENT_TURN = 0
@@ -287,7 +287,6 @@ if __name__=='__main__':
                                 HEIGHT])
         
         # Limit to 60 frames per second
-        time.sleep(0.1)
         clock.tick(60)
  
         # Go ahead and update the screen with what we've drawn.

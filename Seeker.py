@@ -267,7 +267,6 @@ class Seeker(ag.Agent):
         '''
         x DFS / BFS to know what cell is "reachable" (we don't bother visiting unreachable cells)
         (Due to laziness / time constraint, I assume all not-wall cells are reachable)
-
         [c] Build MST using reachable cell (Observe that in this case, finding MST is the same as BFS tree)
             (After some experiment, we observe that DFS tree is more "natural")
         [r] Find an Eulerian tour on MST
@@ -529,7 +528,8 @@ class thanh:
             count += 1
 
     def chase_mode(self, x,y, vision_map, hider_loc):
-        self.request_print("chase mode: ON")
+        #self.request_print("chase mode: ON")
+        random.shuffle(hider_loc)
         sort_array = []
         def get_key(element):
             return element[2]
@@ -541,8 +541,7 @@ class thanh:
         self.goalx = sort_array[0][0] ; self.goaly = sort_array[0][1]
         goal_x = self.goalx ; goal_y = self.goaly
 
-        self.request_print("chase: next goal: " + str(str(goal_x) + ' ' + str(goal_y) + ' ' + str(self.heuristic_map[goal_x,goal_y])))
-
+        self.request_print("chase: found hider at: " + str(self.goalx) + ' ' + str(self.goaly))
         ret_x, ret_y = self.direct_to_goal(x,y,[goal_x,goal_y])
 
         if ret_x == -1 or ret_y == -1 or goal_x == -1 or goal_y == -1:
@@ -562,8 +561,8 @@ class thanh:
             is_goal = True
 
         self.previous_x = x ; self.previous_y = y
-        self.penalty(is_goal,x,y)
-        self.penalty_vision(vision_map,ret_x,ret_y,goal_x,goal_y)
+        #self.penalty(is_goal,x,y)
+        #self.penalty_vision(vision_map,ret_x,ret_y,goal_x,goal_y)
 
         return ret_x, ret_y
 
@@ -593,6 +592,7 @@ class thanh:
             else:
                 max_len = self.row
             for i in range(max_len):
+                #not least potential goal and closest
                 if self.heuristic_map[max_x][max_y] != sort_array[i][2] and max(abs(sort_array[i][0]-curr_x),abs(sort_array[i][1]-curr_y)) < min:
                     min = max(abs(sort_array[i][0]-curr_x),abs(sort_array[i][1]-curr_y))
                     ret_x = sort_array[i][0]
@@ -615,7 +615,11 @@ class thanh:
                 self.restart_heuristic_map()
                 self.request_print("TRIGGER: heuristic map restart")
             else:
-                self.request_print("could not find a path to goal or already at goal")
+                self.request_print("could not find a path to goal or already at goal: " + str(goal_x) + ' ' + str(goal_y))
+                min_x,min_y = self.global_max()
+                self.heuristic_map[goal_x][goal_y] = self.heuristic_map[min_x][min_y]
+                self.request_print("Neutralized goal at: " + str(goal_x) + ' ' + str(goal_y) + " with " + str(self.heuristic_map[goal_x][goal_y]))
+                self.goalx = -1 ; self.goaly = -1
             return -1,-1
         self.request_print("next goal: " + str(goal_x) + ' ' + str(goal_y) + ' ' + str(self.heuristic_map[goal_x,goal_y]))
 
@@ -808,4 +812,3 @@ class thanh:
         
     def breakpoint(self):
         return
-
