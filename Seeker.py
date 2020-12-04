@@ -8,6 +8,7 @@ from queue import Queue
 import copy
 import numpy as np
 import os
+from util import util
 
 class Seeker(ag.Agent):
     # def __init__(self, positionx, positiony, sight):
@@ -32,8 +33,9 @@ class Seeker(ag.Agent):
     
     def move(self, environment, announceArray, visionArray, obstacleArray = None, pushableAroundArray = None):
         #pass
-        #return self.moveL2AStar(environment, announceArray, visionArray)
-        #return self.moveL2TSP(environment,announceArray,visionArray)
+        env=util.getEvironmentIncludeObs(environment, obstacleArray)
+        #return self.moveL2AStar(env, announceArray, visionArray)
+        #return self.moveL2TSP(env,announceArray,visionArray)
         return self.moveThanhHeuristic (environment, announceArray, visionArray,obstacleArray,pushableAroundArray)
 
     def initVisit(self, environment):
