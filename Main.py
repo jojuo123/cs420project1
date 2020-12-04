@@ -11,6 +11,7 @@ import numpy as np
 import os
 import Obstacle as obs
 import random
+import sys
 
 
 # Define some colors
@@ -40,6 +41,8 @@ HEIGHT = 20
 
 # This sets the margin between each cell
 MARGIN = 1
+
+sys.setrecursionlimit(5000)
 
 def get_file():
     file_name = "map/level"
@@ -112,6 +115,7 @@ def check_valid_coor(board,x,y):
     return True
 
 def visualize_agents(board,seeker,hider):
+    # print("seeker: "+str(seeker))
     if check_valid_coor(board,seeker.position[0],seeker.position[1]):
         board[seeker.position[0]][seeker.position[1]] = 3 #might be corrected later
     #else:
