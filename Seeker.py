@@ -606,7 +606,8 @@ class thanh:
             sort_array = []
             for i in range(self.row):
                 for j in range(self.column):
-                    sort_array.append([i,j,self.heuristic_map[i][j]])
+                    if i != x and y != j:
+                        sort_array.append([i,j,self.heuristic_map[i][j]])
             sort_array.sort(key = get_key)
 
             #find next goal, in top n (n = total row of board), take the closest goal to be goal
