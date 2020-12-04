@@ -592,6 +592,7 @@ class thanh:
         return ret_x, ret_y
 
     def request_print(self, str):
+        return None
         if (str != self.print_to_console):
             self.print_to_console = str
             print(self.print_to_console)

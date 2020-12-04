@@ -208,13 +208,14 @@ class Engine:
                     self.deadhiders.append(hider)
                     self.hiders.remove(hider)
                     continue
-            announcePosition = hider.Announce()
+            announcePosition = hider.Announce(self.environment, self.obstacles)
             if not announcePosition is None:
+                print ("Hider announce at: "+str(announcePosition))
                 self.announceList.append(copy.deepcopy(announcePosition))
 
     def isEnd(self):
-        if self.TurnLimit() <= self.turn:
-            return True
+        # if self.TurnLimit() <= self.turn:
+        #    return True
         for hider in self.hiders:
             if hider.position != [-1, -1]:
                 return False

@@ -18,15 +18,22 @@ class Hider(ag.Agent):
         self.position = [-1, -1]
         return x,y
     
-    def AnnouncePosition(self):
-        return self.position
+    def AnnouncePosition(self, environment, obstacleArray):
+        env = util.getEvironmentIncludeObs(environment, obstacleArray)
+        array=[]
+        for i in range(self.position[0]-3, self.position[0]+4):
+            for j in range(self.position[1]-3, self.position[1]+4):
+                if i>=0 and i<env.rows and j>=0 and j<env.columns and env.board[i][j]==0:
+                    array.append([i,j])
+        id=random.randint(0, len(array)-1)
+        return array[id]
     
-    def Announce(self):
+    def Announce(self, environment, obstacleArray):
         if self.prob >= 0.1:
             m = random.random()
             if m < self.prob:
                 self.prob = 0
-                return self.AnnouncePosition()
+                return self.AnnouncePosition(environment, obstacleArray)
             else:
                 self.prob = min(self.prob + 0.1, 1.0)
                 return None
@@ -35,7 +42,7 @@ class Hider(ag.Agent):
             return None
     
     def moveProb(self, seekerInSight):
-        if (seekerInSight == []):
+        if (seekerInSight is None):
             return 1.0
         return 0.8
 
@@ -268,16 +275,17 @@ class Hider(ag.Agent):
                 self.dc4=[0,-1,0,1]
                 self.generateMapDeadEnd(obstacleArray)
                 self.generateMapMerriable(environment, obstacleArray)
-            def generateMapReachable (self, pos, obstacleArrayNowNotProcessed):
+            def generateMapReachable (self, pos, environment, obstacleArrayNowNotProcessed):
                 visit=[[0 for j in range(self.nc)] for i in range(self.nr)]
                 def fill (r,c,fillval):
-                    if not self.inside(r,c) or visit[r][c] == 1:
+                    if not self.inside(r,c) or visit[r][c] == 1 or environment.board[r][c]==1:
                         return
                     visit[r][c] = 1
                     self.mapReachable[r][c] = fillval
-                    for i in range(self.nr):
+                    for i in range(len(self.dr8)):
                         rr, cc = [r+self.dr8[i], c+self.dc8[i]]
                         fill(rr,cc,fillval)
+                fill(pos[0], pos[1], 1)
 
             def generateMapDeadEnd (self, obstacleArrayNowNotProcessed):
                 def inside (r,c):
@@ -296,7 +304,7 @@ class Hider(ag.Agent):
                 q=Queue()
                 for i in range(self.nr):
                     for j in range(self.nc):
-                        if deadScore([i,j]) >= 7:
+                        if deadScore([i,j]) >= 7 and self.map[i][j]==0:
                             self.mapDeadEnd[i][j] = 1
                             visit[i][j]=1
                             q.put([i,j])
@@ -305,7 +313,8 @@ class Hider(ag.Agent):
                     r,c = q.get()
                     for i in range(len(self.dr4)):
                         rr, cc = [r+self.dr4[i], c+self.dc4[i]]
-                        if inside(rr,cc) and deadScore([rr,cc])>=7 and visit[rr][cc]==0:
+                        if inside(rr,cc) and deadScore([rr,cc])>=7 and visit[rr][cc]==0 \
+                            and self.map[rr][cc]==0:
                             self.mapDeadEnd[rr][cc]=1
                             visit[rr][cc]=1
                             q.put([rr,cc])
@@ -503,9 +512,9 @@ class Hider(ag.Agent):
                     return ans
                 
                 def distance_score (r1, c1, r2, c2):
-                    dis = max(abs(r1-c1), abs(r2-c2))
+                    dis = max(abs(r1-r2), abs(c1-c2))
                     return PENALTY_HEURISTIC_DISTANCE * dis
-                self.generateMapReachable(pos, obstacleArray)
+                self.generateMapReachable(pos, environment, obstacleArray)
 
                 Max=-999999999999; save_goal=pos
                 for i in range(self.nr):
@@ -523,7 +532,7 @@ class Hider(ag.Agent):
                         
                         goalEval[i][j] -= distance_score(i,j,pos[0],pos[1])
 
-                        if (goalEval[i][j] > Max):
+                        if (environment.board[i][j]==0 and goalEval[i][j] > Max):
                             Max=goalEval[i][j]
                             save_goal=[i,j]
                 return hider.moveGoalAStar(environment, seekerInSight, save_goal)
