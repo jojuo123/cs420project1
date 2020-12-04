@@ -176,7 +176,7 @@ class Engine:
             if not newObstaclePositions is None:
                 self.obstacles = copy.deepcopy(newObstaclePositions)
         else:
-            seekerNextPosition = self.seeker.move(self.environment, hiderSound, hiderInSight, copy.deepcopy(self.obstacles)) #deepcopy ở đây là quan trọng
+            seekerNextPosition = self.seeker.move(self.environment, hiderSound, hiderInSight, copy.deepcopy(self.obstacles),[]) #deepcopy ở đây là quan trọng
   
         #print(self.turn, seekerNextPosition)
         if not seekerNextPosition is None:

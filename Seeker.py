@@ -30,11 +30,11 @@ class Seeker(ag.Agent):
 
         return None, None
     
-    def move(self, environment, announceArray, visionArray, obstacleArray = None):
+    def move(self, environment, announceArray, visionArray, obstacleArray = None, pushableAroundArray = None):
         #pass
         #return self.moveL2AStar(environment, announceArray, visionArray)
         #return self.moveL2TSP(environment,announceArray,visionArray)
-        return self.moveThanhHeuristic (environment, announceArray, visionArray)
+        return self.moveThanhHeuristic (environment, announceArray, visionArray,obstacleArray,pushableAroundArray)
 
     def initVisit(self, environment):
         rows = environment.rows
@@ -403,14 +403,14 @@ class Seeker(ag.Agent):
             TSP_v2()
         return go()
 
-    def moveThanhHeuristic (self, environment, announceArray, visionArray):
+    def moveThanhHeuristic (self, environment, announceArray, visionArray, obs_list,pushable_list):
         if self.thanh1 is None:
             #self.thanh1 = thanh_heuristic.thanh(environment.board)
             self.thanh1 = thanh(environment.board)
 
         # Cần sửa signature của thanh.make_move lại, visionArray nhận các vị trí hider nhìn thấy
         # Xem dòng 76 của Engine.py
-        newpos = self.thanh1.make_move(self.position[0], self.position[1], self.getVision(environment), announceArray, visionArray)
+        newpos = self.thanh1.make_move(self.position[0], self.position[1], self.getVision(environment), announceArray, visionArray,obs_list,pushable_list)
         # Because newpos is tuple (... :< pair programming không để ý)
         return list(newpos)
 
@@ -425,6 +425,7 @@ class thanh:
         self.row = len(map)
         self.column = len(map[0])
         self.map = copy.deepcopy(map)
+        self.map_copy = copy.deepcopy(map)
         self.heuristic_map = np.zeros((self.row,self.column))
         self.basic_heuristic = np.zeros((self.row,self.column))
         self.move_x = [-1, -1, -1 , 0 , 1, 1, 1, 0]
@@ -439,6 +440,18 @@ class thanh:
         self.goaly = -1
         self.print_to_console = ""
         self.heuristic_map_copy = copy.deepcopy(self.heuristic_map)
+        self.heuristic_map_copy_temp = copy.deepcopy(self.heuristic_map)
+
+    def make_obs_wall(self,obs_list):
+        self.map = copy.deepcopy(self.map_copy)
+        self.heuristic_map = copy.deepcopy(self.heuristic_map_copy_temp)
+        for i in range(len(obs_list)):
+            row = obs_list[i].size[0]
+            col = obs_list[i].size[1]
+            for j in range(obs_list[i].upperLeft[0], obs_list[i].upperLeft[0]+row):
+                for k in range(obs_list[i].upperLeft[1], obs_list[i].upperLeft[1]+col):
+                    self.map[j][k] = 1
+                    self.heuristic_map[j][k] = 0
 
     def shuffle_neighbor_step(self):
         shuffle_list = []
@@ -653,7 +666,10 @@ class thanh:
                     if x >= 0 and x < self.row and y >= 0 and y < self.column and self.map[x][y] == 0:
                         self.heuristic_map[x][y] -= 2
 
-    def make_move(self, x, y, vision_map, announce_loc, hider_loc):
+    def make_move(self, x, y, vision_map, announce_loc, hider_loc,obs_list, pushable_obs_list):
+        if obs_list != []:
+            self.make_obs_wall(obs_list)
+
         if hider_loc != []:
             save_x,save_y = self.chase_mode(x,y,vision_map ,hider_loc)
         else:
@@ -665,6 +681,8 @@ class thanh:
                 count = random.randint(0,7)
                 save_x = x + self.move_x[count] ; save_y = y + self.move_y[count]
             self.request_print("random step taken at: " + str(save_x) + ' ' + str(save_y))
+
+        self.heuristic_map_copy_temp = copy.deepcopy(self.heuristic_map)
         return save_x, save_y
 
     def direct_to_goal(self,init_x,init_y,goal):

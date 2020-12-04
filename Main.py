@@ -53,8 +53,6 @@ def get_file():
 
 def import_map(file_name):
     file = open(file_name,"r")
-    total_row = int(file.readline())
-    total_column = int(file.readline())
     lines = file.readlines()
 
     data = []
@@ -62,7 +60,9 @@ def import_map(file_name):
         number_strings = line.split() # Split the line on runs of whitespace
         numbers = [int(n) for n in number_strings] # Convert to integers
         data.append(numbers) # Add the "row" to your list.
-
+    total_row = data[0][0]
+    total_column = data[0][1]
+    data.pop(0)
     file.close()
     hiders = []
     seeker = 0
@@ -70,44 +70,19 @@ def import_map(file_name):
     checked_obs = np.zeros((total_row,total_column))
     for i in range(total_row):
         for j in range(total_column):
-            if data[i][j] == 2: #seeker pos
+            if data[i][j] == 3: #seeker pos
                 seeker = seek.Seeker(i,j,3,5)
                 data[i][j] = 0
-            elif data[i][j] == 3: #hider pos
+            elif data[i][j] == 2: #hider pos
                 hiders.append(hide.Hider(i,j,2))
                 data[i][j] = 0
-            elif data[i][j] == 4 and checked_obs[i][j] != 1: #obs
-                obs_,checked_obs = find_obs(data,i,j,checked_obs)
-                obs_list.append(obs_)
 
+    for i in range(total_row, len(data)):
+        obs_ = obs.Obstacle([data[i][0],data[i][1]],[data[i][2]-data[i][0]+1,data[i][3]-data[i][1]+1],WOOD)
+        obs_list.append(obs_)
+    while len(data) > total_row:
+        data.pop(total_row)
     return total_row, total_column, data,seeker,hiders,obs_list
-
-def find_obs(data,x,y,checked_obs):
-    upper_left = [x,y]
-    total_row = len(data)
-    total_column = len(data[0])
-    size_row = 0
-    size_col = 0
-    xx = x ; yy = y
-    while yy < total_column and data[xx][yy] == 4:
-        if checked_obs[xx][yy] == 0:
-            checked_obs[xx][yy] = 1
-            size_col += 1
-        yy += 1
-    xx = x+1 ; yy = y
-    if size_col <= 1:
-        size_row = 1
-        while xx < total_row and data[xx][yy] == 4:
-            if checked_obs[xx][yy] == 0 :
-                checked_obs[xx][yy] = 1
-                size_row += 1
-            xx += 1
-        return obs.Obstacle(upper_left,[size_row,size_col],WOOD),checked_obs
-    else:
-        size_row = 1
-        return obs.Obstacle(upper_left,[size_row,size_col],WOOD),checked_obs
-
-
 
 def check_valid_coor(board,x,y):
     total_row = len(board)
@@ -120,12 +95,12 @@ def check_valid_coor(board,x,y):
 
 def visualize_agents(board,seeker,hider):
     if check_valid_coor(board,seeker.position[0],seeker.position[1]):
-        board[seeker.position[0]][seeker.position[1]] = 2 #might be corrected later
+        board[seeker.position[0]][seeker.position[1]] = 3 #might be corrected later
     #else:
     #    print("invalid seeker coordinate " + str(seeker.position[0]) + ' ' + str(seeker.position[1]))
     for i in range(len(hider)):
         if check_valid_coor(board,hider[i].position[0],hider[i].position[1]):
-            board[hider[i].position[0]][hider[i].position[1]] = 3 #might be corrected later
+            board[hider[i].position[0]][hider[i].position[1]] = 2 #might be corrected later
         #else:
         #    print("invalid hider coordinate " + str(hider[i].position[0]) + ' ' + str(hider[i].position[1]))
     return board
@@ -269,9 +244,9 @@ if __name__=='__main__':
                 color = WHITE
                 if visual_map[row][column] == 1:
                     color = DARK_GREY
-                elif visual_map[row][column] == 2:
-                    color = RED
                 elif visual_map[row][column] == 3:
+                    color = RED
+                elif visual_map[row][column] == 2:
                     color = GREEN
                 elif visual_map[row][column] == 4:
                     color = WOOD
