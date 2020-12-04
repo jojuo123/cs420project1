@@ -177,11 +177,12 @@ class Seeker(ag.Agent):
                     heappush(openSet, u)
         return None
     
-    def getVision(self, environment):
+    def getVision(self, environment, obstacleArray):
         #return mang 2d {0,1} 
         #0 la ko co sight
         #1 la co sight
         #Use self.sight 
+        environment=util.getEvironmentIncludeObs(environment, obstacleArray)
         nrow=environment.rows
         ncol=environment.columns
         a=[[0 for j in range(ncol)] for i in range (nrow)]
@@ -412,7 +413,7 @@ class Seeker(ag.Agent):
 
         # Cần sửa signature của thanh.make_move lại, visionArray nhận các vị trí hider nhìn thấy
         # Xem dòng 76 của Engine.py
-        newpos = self.thanh1.make_move(self.position[0], self.position[1], self.getVision(environment), announceArray, visionArray,obs_list,pushable_list)
+        newpos = self.thanh1.make_move(self.position[0], self.position[1], self.getVision(environment, obs_list), announceArray, visionArray,obs_list,pushable_list)
         # Because newpos is tuple (... :< pair programming không để ý)
         return list(newpos)
 

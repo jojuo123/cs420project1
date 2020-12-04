@@ -57,11 +57,12 @@ class Hider(ag.Agent):
         #return self.moveGoalAStar (env, seekerInSight, goal=None) #Random goal
         return self.moveTacticV1 (env, seekerInSight, obstacleArray)
 
-    def getVision(self, environment):
+    def getVision(self, environment, obstacleArray):
         #return mang 2d {0,1} 
         #0 la ko co sight
         #1 la co sight
         #Use self.sight 
+        environment=util.getEvironmentIncludeObs(environment, obstacleArray)
         nrow=environment.rows
         ncol=environment.columns
         a=[[0 for j in range(ncol)] for i in range (nrow)]
