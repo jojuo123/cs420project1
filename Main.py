@@ -10,6 +10,7 @@ import time
 import numpy as np
 import os
 import Obstacle as obs
+import random
 
 
 # Define some colors
@@ -20,9 +21,12 @@ RED = (255, 0, 0)
 BLUE = (0, 0 , 255)
 DARK_GREY = (128, 128, 128)
 PINK = (255, 192, 203)
-LIGHT_GREEN = (152,251,152)
 LIGHT_CYAN = (224,255,255)
 WOOD = (202,164,114)
+used_color = []
+used_color.append([4,BLACK]) ; used_color.append([0,WHITE]) ; used_color.append([2,GREEN]) ; used_color.append([3,RED]) ;
+used_color.append([1, DARK_GREY]) ; used_color.append([5,PINK]) ; used_color.append([6,LIGHT_CYAN]) ; used_color.append([7,WOOD]) ; 
+
 #gameplay constant
 MAP_FILE = ""
 MAX_WAIT_TIME = 0.1
@@ -51,6 +55,18 @@ def get_file():
     
     return file_name,level
 
+def get_new_color():
+    old_color = True
+    while (old_color):
+        red = random.randint(100,230) ; green = random.randint(100,230) ; blue = random.randint(100,230)
+        old_color = False
+        for i in range(len(used_color)):
+            if red < used_color[i][1][0]*0.5 and red > used_color[i][1][0]*1.5 and green < used_color[i][1][1]*0.5 and green > used_color[i][1][1]*1.5 and blue < used_color[i][1][2]*0.5 and blue > used_color[i][1][2]*1.5:
+                old_color = True
+                break
+    used_color.append([len(used_color),(red,green,blue)])
+    return (red,green,blue)
+
 def import_map(file_name):
     file = open(file_name,"r")
     lines = file.readlines()
@@ -78,7 +94,9 @@ def import_map(file_name):
                 data[i][j] = 0
 
     for i in range(total_row, len(data)):
-        obs_ = obs.Obstacle([data[i][0],data[i][1]],[data[i][2]-data[i][0]+1,data[i][3]-data[i][1]+1],WOOD)
+        new_color = get_new_color()
+
+        obs_ = obs.Obstacle([data[i][0],data[i][1]],[data[i][2]-data[i][0]+1,data[i][3]-data[i][1]+1],new_color)
         obs_list.append(obs_)
     while len(data) > total_row:
         data.pop(total_row)
@@ -105,12 +123,19 @@ def visualize_agents(board,seeker,hider):
         #    print("invalid hider coordinate " + str(hider[i].position[0]) + ' ' + str(hider[i].position[1]))
     return board
 
+def get_color_code(color_to_find):
+    for i in range(len(used_color)):
+        if color_to_find == used_color[i][1]:
+            return i
+    return -1
+
 def visualize_obstacles(board,obs_list):
     for i in range(len(obs_list)):
+        color_code = get_color_code(obs_list[i].color)
         for j in range(obs_list[i].size[0]):
             for k in range(obs_list[i].size[1]):
                 if check_valid_coor(board,obs_list[i].upperLeft[0]+j, obs_list[i].upperLeft[1]+k):
-                    board[obs_list[i].upperLeft[0]+j][obs_list[i].upperLeft[1]+k] = 4 #might be corrected later
+                    board[obs_list[i].upperLeft[0]+j][obs_list[i].upperLeft[1]+k] = color_code #might be corrected later
     return board
 
 def update_visual_map(engine):
@@ -140,11 +165,12 @@ def print_summary(level,file_path,status, total_run_time, score, seeker_steps, t
     print("\nSeeker score: " + str(score))
     print("\n\n\n\n\n\n-----------------------------------------------------------------------")
 
-
+def get_key(element):
+    return element[0]
 
 if __name__=='__main__':
     # init necessary components
-
+    used_color.sort(key = get_key)
     visual_map = []
     total_row = 0
     total_column = 0
@@ -202,7 +228,7 @@ if __name__=='__main__':
         for i in range(len(seenable)):
                 for j in range(len(seenable[0])):
                     if visual_map[i][j] == 0 and seenable[i][j] == 1:
-                        visual_map[i][j] = 998
+                        visual_map[i][j] = 5
         
         #hider vision
         for i in range(len(engine.hiders)):
@@ -210,7 +236,7 @@ if __name__=='__main__':
             for i in range(len(seenable)):
                     for j in range(len(seenable[0])):
                         if visual_map[i][j] == 0 and seenable[i][j] == 1:
-                            visual_map[i][j] = 999
+                            visual_map[i][j] = 6
 
         #gameplay
         wait_time = time.time() - timing
@@ -241,19 +267,20 @@ if __name__=='__main__':
         
         for row in range(total_row):
             for column in range(total_column):
-                color = WHITE
-                if visual_map[row][column] == 1:
-                    color = DARK_GREY
-                elif visual_map[row][column] == 3:
-                    color = RED
-                elif visual_map[row][column] == 2:
-                    color = GREEN
-                elif visual_map[row][column] == 4:
-                    color = WOOD
-                elif visual_map[row][column] == 998:
-                    color = PINK
-                elif visual_map[row][column] == 999:
-                    color = LIGHT_CYAN
+                #color = WHITE
+                #if visual_map[row][column] == 1:
+                #    color = DARK_GREY
+                #elif visual_map[row][column] == 3:
+                #    color = RED
+                #elif visual_map[row][column] == 2:
+                #    color = GREEN
+                #elif visual_map[row][column] == 4:
+                #    color = WOOD
+                #elif visual_map[row][column] == 998:
+                #    color = PINK
+                #elif visual_map[row][column] == 999:
+                #    color = LIGHT_CYAN
+                color = used_color[visual_map[row][column]][1]
                 pygame.draw.rect(screen,
                                 color,
                                 [(MARGIN + WIDTH) * column + MARGIN,

@@ -442,16 +442,25 @@ class thanh:
         self.heuristic_map_copy = copy.deepcopy(self.heuristic_map)
         self.heuristic_map_copy_temp = copy.deepcopy(self.heuristic_map)
 
-    def make_obs_wall(self,obs_list):
+    def check_pushable_obs(self, obs,pushable_obs_list):
+        if pushable_obs_list is None or pushable_obs_list == []:
+            return True
+        for i in range(len(pushable_obs_list)):
+            if obs.upperLeft == pushable_obs_list[i].upperLeft:
+                return False
+        return True
+
+    def make_obs_wall(self,obs_list,pushable_obs_list):
         self.map = copy.deepcopy(self.map_copy)
         self.heuristic_map = copy.deepcopy(self.heuristic_map_copy_temp)
         for i in range(len(obs_list)):
-            row = obs_list[i].size[0]
-            col = obs_list[i].size[1]
-            for j in range(obs_list[i].upperLeft[0], obs_list[i].upperLeft[0]+row):
-                for k in range(obs_list[i].upperLeft[1], obs_list[i].upperLeft[1]+col):
-                    self.map[j][k] = 1
-                    self.heuristic_map[j][k] = 0
+            if self.check_pushable_obs(obs_list[i],pushable_obs_list):
+                row = obs_list[i].size[0]
+                col = obs_list[i].size[1]
+                for j in range(obs_list[i].upperLeft[0], obs_list[i].upperLeft[0]+row):
+                    for k in range(obs_list[i].upperLeft[1], obs_list[i].upperLeft[1]+col):
+                        self.map[j][k] = 1
+                        self.heuristic_map[j][k] = 0
 
     def shuffle_neighbor_step(self):
         shuffle_list = []
@@ -666,16 +675,22 @@ class thanh:
                     if x >= 0 and x < self.row and y >= 0 and y < self.column and self.map[x][y] == 0:
                         self.heuristic_map[x][y] -= 2
 
-    def make_move(self, x, y, vision_map, announce_loc, hider_loc,obs_list, pushable_obs_list):
-        if obs_list != []:
-            self.make_obs_wall(obs_list)
+    def make_move(self, x, y, vision_map, announce_loc, hider_loc,obs_list1, pushable_obs_list1):
+        obs_list = copy.deepcopy(obs_list1)
+        pushable_obs_list = copy.deepcopy(pushable_obs_list1)
 
+        #make obs all wall if obs can't be pushed
+        self.make_obs_wall(obs_list,pushable_obs_list)
+        
+        #hider is spotted
         if hider_loc != []:
             save_x,save_y = self.chase_mode(x,y,vision_map ,hider_loc)
         else:
             if announce_loc != []:
                 self.bonus_announce(announce_loc)
+
             save_x,save_y = self.explore_mode(x,y,vision_map)
+
         if save_x == -1 and save_y == -1:
             while save_x < 0 or save_y < 0 or save_x >= self.row or save_y >= self.column or self.map[save_x][save_y]==1:
                 count = random.randint(0,7)
