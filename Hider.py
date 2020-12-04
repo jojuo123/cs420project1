@@ -52,9 +52,10 @@ class Hider(ag.Agent):
         if not canMove(prob=p):     # Hider won't move this turn
             return None
 
-        #return self.moveRandomDirection (environment, seekerInSight) # Now move random
-        #return self.moveGoalAStar (environment, seekerInSight, goal=None) #Random goal
-        return self.moveTacticV1 (environment, seekerInSight, obstacleArray)
+        env = util.getEvironmentIncludeObs(environment, obstacleArray)
+        #return self.moveRandomDirection (env, seekerInSight) # Now move random
+        #return self.moveGoalAStar (env, seekerInSight, goal=None) #Random goal
+        return self.moveTacticV1 (env, seekerInSight, obstacleArray)
 
     def getVision(self, environment):
         #return mang 2d {0,1} 

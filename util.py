@@ -1,4 +1,5 @@
 import Environment as env
+import copy
 
 class util:
     @staticmethod
@@ -80,3 +81,17 @@ class util:
             route.append([save_x, save_y])
             trace_x = save_x; trace_y = save_y
         return [dist, route]
+
+    @staticmethod
+    def getEvironmentIncludeObs (environment, obstacleArray):
+        env=copy.deepcopy(environment)
+        map=env.board
+        if obstacleArray is None:
+            return env
+        for obs in obstacleArray:
+            tr, tc=obs.upperLeft
+            sr, sc=obs.size
+            for i in range(sr):
+                for j in range(sc):
+                    map[tr+i][tc+j] = 1   # Obstacle --> Wall
+        return env
