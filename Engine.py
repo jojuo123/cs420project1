@@ -163,7 +163,7 @@ class Engine:
 
         self.turn += 1
         self.UpdateScore()
-        seekVision = self.seeker.getVision(self.environment)
+        seekVision = self.seeker.getVision(self.environment, self.obstacles)
         hiderInSight = self.showSight(seekVision, isSeeker=True)
         #print(hiderInSight)
         hiderSound = self.showAnnounce(self.announceList, self.seeker.position, self.seeker.soundRange)
@@ -191,7 +191,7 @@ class Engine:
                 self.deadhiders.append(hider)
                 self.hiders.remove(hider)
                 continue
-            hiderVision = hider.getVision(self.environment)
+            hiderVision = hider.getVision(self.environment, self.obstacles)
             seekerInSight = self.showSight(visionMap=hiderVision, isSeeker=False, prevSeekerPosition=prevSeekerPosition)
 
             if (self.level >= 3):

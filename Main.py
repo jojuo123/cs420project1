@@ -224,7 +224,7 @@ if __name__=='__main__':
         visual_map = update_visual_map(engine)
         
         #seeker vision
-        seenable = engine.seeker.getVision(engine.environment)
+        seenable = engine.seeker.getVision(engine.environment, engine.obstacles)
         for i in range(len(seenable)):
                 for j in range(len(seenable[0])):
                     if visual_map[i][j] == 0 and seenable[i][j] == 1:
@@ -232,7 +232,7 @@ if __name__=='__main__':
         
         #hider vision
         for i in range(len(engine.hiders)):
-            seenable = engine.hiders[i].getVision(engine.environment)
+            seenable = engine.hiders[i].getVision(engine.environment, engine.obstacles)
             for i in range(len(seenable)):
                     for j in range(len(seenable[0])):
                         if visual_map[i][j] == 0 and seenable[i][j] == 1:
