@@ -30,11 +30,11 @@ class Seeker(ag.Agent):
 
         return None, None
     
-    def move(self, environment, announceArray, visionArray, obstacleArray = None):
+    def move(self, environment, announceArray, visionArray, obstacleArray = None, pushableAroundArray = None):
         #pass
         #return self.moveL2AStar(environment, announceArray, visionArray)
         #return self.moveL2TSP(environment,announceArray,visionArray)
-        return self.moveThanhHeuristic (environment, announceArray, visionArray)
+        return self.moveThanhHeuristic (environment, announceArray, visionArray,obstacleArray,pushableAroundArray)
 
     def initVisit(self, environment):
         rows = environment.rows
@@ -267,7 +267,6 @@ class Seeker(ag.Agent):
         '''
         x DFS / BFS to know what cell is "reachable" (we don't bother visiting unreachable cells)
         (Due to laziness / time constraint, I assume all not-wall cells are reachable)
-
         [c] Build MST using reachable cell (Observe that in this case, finding MST is the same as BFS tree)
             (After some experiment, we observe that DFS tree is more "natural")
         [r] Find an Eulerian tour on MST
@@ -404,14 +403,14 @@ class Seeker(ag.Agent):
             TSP_v2()
         return go()
 
-    def moveThanhHeuristic (self, environment, announceArray, visionArray):
+    def moveThanhHeuristic (self, environment, announceArray, visionArray, obs_list,pushable_list):
         if self.thanh1 is None:
             #self.thanh1 = thanh_heuristic.thanh(environment.board)
             self.thanh1 = thanh(environment.board)
 
         # Cần sửa signature của thanh.make_move lại, visionArray nhận các vị trí hider nhìn thấy
         # Xem dòng 76 của Engine.py
-        newpos = self.thanh1.make_move(self.position[0], self.position[1], self.getVision(environment), announceArray, visionArray)
+        newpos = self.thanh1.make_move(self.position[0], self.position[1], self.getVision(environment), announceArray, visionArray,obs_list,pushable_list)
         # Because newpos is tuple (... :< pair programming không để ý)
         return list(newpos)
 
@@ -426,6 +425,7 @@ class thanh:
         self.row = len(map)
         self.column = len(map[0])
         self.map = copy.deepcopy(map)
+        self.map_copy = copy.deepcopy(map)
         self.heuristic_map = np.zeros((self.row,self.column))
         self.basic_heuristic = np.zeros((self.row,self.column))
         self.move_x = [-1, -1, -1 , 0 , 1, 1, 1, 0]
@@ -440,6 +440,27 @@ class thanh:
         self.goaly = -1
         self.print_to_console = ""
         self.heuristic_map_copy = copy.deepcopy(self.heuristic_map)
+        self.heuristic_map_copy_temp = copy.deepcopy(self.heuristic_map)
+
+    def check_pushable_obs(self, obs,pushable_obs_list):
+        if pushable_obs_list is None or pushable_obs_list == []:
+            return True
+        for i in range(len(pushable_obs_list)):
+            if obs.upperLeft == pushable_obs_list[i].upperLeft:
+                return False
+        return True
+
+    def make_obs_wall(self,obs_list,pushable_obs_list):
+        self.map = copy.deepcopy(self.map_copy)
+        self.heuristic_map = copy.deepcopy(self.heuristic_map_copy_temp)
+        for i in range(len(obs_list)):
+            if self.check_pushable_obs(obs_list[i],pushable_obs_list):
+                row = obs_list[i].size[0]
+                col = obs_list[i].size[1]
+                for j in range(obs_list[i].upperLeft[0], obs_list[i].upperLeft[0]+row):
+                    for k in range(obs_list[i].upperLeft[1], obs_list[i].upperLeft[1]+col):
+                        self.map[j][k] = 1
+                        self.heuristic_map[j][k] = 0
 
     def shuffle_neighbor_step(self):
         shuffle_list = []
@@ -529,7 +550,8 @@ class thanh:
             count += 1
 
     def chase_mode(self, x,y, vision_map, hider_loc):
-        self.request_print("chase mode: ON")
+        #self.request_print("chase mode: ON")
+        random.shuffle(hider_loc)
         sort_array = []
         def get_key(element):
             return element[2]
@@ -541,8 +563,7 @@ class thanh:
         self.goalx = sort_array[0][0] ; self.goaly = sort_array[0][1]
         goal_x = self.goalx ; goal_y = self.goaly
 
-        self.request_print("chase: next goal: " + str(str(goal_x) + ' ' + str(goal_y) + ' ' + str(self.heuristic_map[goal_x,goal_y])))
-
+        self.request_print("chase: found hider at: " + str(self.goalx) + ' ' + str(self.goaly))
         ret_x, ret_y = self.direct_to_goal(x,y,[goal_x,goal_y])
 
         if ret_x == -1 or ret_y == -1 or goal_x == -1 or goal_y == -1:
@@ -562,8 +583,8 @@ class thanh:
             is_goal = True
 
         self.previous_x = x ; self.previous_y = y
-        self.penalty(is_goal,x,y)
-        self.penalty_vision(vision_map,ret_x,ret_y,goal_x,goal_y)
+        #self.penalty(is_goal,x,y)
+        #self.penalty_vision(vision_map,ret_x,ret_y,goal_x,goal_y)
 
         return ret_x, ret_y
 
@@ -593,6 +614,7 @@ class thanh:
             else:
                 max_len = self.row
             for i in range(max_len):
+                #not least potential goal and closest
                 if self.heuristic_map[max_x][max_y] != sort_array[i][2] and max(abs(sort_array[i][0]-curr_x),abs(sort_array[i][1]-curr_y)) < min:
                     min = max(abs(sort_array[i][0]-curr_x),abs(sort_array[i][1]-curr_y))
                     ret_x = sort_array[i][0]
@@ -615,7 +637,11 @@ class thanh:
                 self.restart_heuristic_map()
                 self.request_print("TRIGGER: heuristic map restart")
             else:
-                self.request_print("could not find a path to goal or already at goal")
+                self.request_print("could not find a path to goal or already at goal: " + str(goal_x) + ' ' + str(goal_y))
+                min_x,min_y = self.global_max()
+                self.heuristic_map[goal_x][goal_y] = self.heuristic_map[min_x][min_y]
+                self.request_print("Neutralized goal at: " + str(goal_x) + ' ' + str(goal_y) + " with " + str(self.heuristic_map[goal_x][goal_y]))
+                self.goalx = -1 ; self.goaly = -1
             return -1,-1
         self.request_print("next goal: " + str(goal_x) + ' ' + str(goal_y) + ' ' + str(self.heuristic_map[goal_x,goal_y]))
 
@@ -649,18 +675,29 @@ class thanh:
                     if x >= 0 and x < self.row and y >= 0 and y < self.column and self.map[x][y] == 0:
                         self.heuristic_map[x][y] -= 2
 
-    def make_move(self, x, y, vision_map, announce_loc, hider_loc):
+    def make_move(self, x, y, vision_map, announce_loc, hider_loc,obs_list1, pushable_obs_list1):
+        obs_list = copy.deepcopy(obs_list1)
+        pushable_obs_list = copy.deepcopy(pushable_obs_list1)
+
+        #make obs all wall if obs can't be pushed
+        self.make_obs_wall(obs_list,pushable_obs_list)
+        
+        #hider is spotted
         if hider_loc != []:
             save_x,save_y = self.chase_mode(x,y,vision_map ,hider_loc)
         else:
             if announce_loc != []:
                 self.bonus_announce(announce_loc)
+
             save_x,save_y = self.explore_mode(x,y,vision_map)
+
         if save_x == -1 and save_y == -1:
             while save_x < 0 or save_y < 0 or save_x >= self.row or save_y >= self.column or self.map[save_x][save_y]==1:
                 count = random.randint(0,7)
                 save_x = x + self.move_x[count] ; save_y = y + self.move_y[count]
             self.request_print("random step taken at: " + str(save_x) + ' ' + str(save_y))
+
+        self.heuristic_map_copy_temp = copy.deepcopy(self.heuristic_map)
         return save_x, save_y
 
     def direct_to_goal(self,init_x,init_y,goal):
@@ -808,4 +845,3 @@ class thanh:
         
     def breakpoint(self):
         return
-
