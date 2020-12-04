@@ -29,7 +29,7 @@ used_color.append([1, DARK_GREY]) ; used_color.append([5,PINK]) ; used_color.app
 
 #gameplay constant
 MAP_FILE = ""
-MAX_WAIT_TIME = 0.1
+MAX_WAIT_TIME = 0
 TURN_LIMIT = 2000
 TIME_LIMIT = 200
 CURRENT_TURN = 0
@@ -242,7 +242,6 @@ if __name__=='__main__':
         wait_time = time.time() - timing
         if time.time() - timing >= MAX_WAIT_TIME:
             #set caption
-            timing = time.time()
             time_passed = str("%.2f" % (time.time() - begin)) + "s"
             score = engine.score
             caption = set_caption(engine_level,time_passed,TIME_LIMIT,score)
@@ -264,6 +263,7 @@ if __name__=='__main__':
                     status = "SEEKER COMPLETES THIS ROUND"
                 print_summary(engine_level, MAP_FILE, status, time_passed,score,CURRENT_TURN,TURN_LIMIT,TIME_LIMIT)
                 done = True
+            timing = time.time()
         
         for row in range(total_row):
             for column in range(total_column):
