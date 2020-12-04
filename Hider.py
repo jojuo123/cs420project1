@@ -1,15 +1,22 @@
 import Agent as ag
 import random
 import Obstacle as obs
+import copy
+from queue import Queue
+from util import util
 
 class Hider(ag.Agent):
     def __init__(self, positionx, positiony, sight):
         self.prob = 0.0
-        self.moveRandomGoal_goal = None
+        self.moveGoal_goal = None
+        self.tactic_v1 = None
         super().__init__(positionx, positiony, sight)
     
     def Dead(self):
+        x = self.position[0]
+        y = self.position[1]
         self.position = [-1, -1]
+        return x,y
     
     def AnnouncePosition(self):
         return self.position
@@ -30,7 +37,7 @@ class Hider(ag.Agent):
     def moveProb(self, seekerInSight):
         if (seekerInSight == []):
             return 1.0
-        return 0.6
+        return 0.8
 
     def initMoveL4(self, environment, seekerInSight, obstacleArray = None, pushableAroundArray = None):     
         return None, None #obs list mới, vị trí mới
@@ -46,7 +53,8 @@ class Hider(ag.Agent):
             return None
 
         #return self.moveRandomDirection (environment, seekerInSight) # Now move random
-        return self.moveRandomGoalAStar (environment, seekerInSight)
+        #return self.moveGoalAStar (environment, seekerInSight, goal=None) #Random goal
+        return self.moveTacticV1 (environment, seekerInSight, obstacleArray)
 
     def getVision(self, environment):
         #return mang 2d {0,1} 
@@ -152,8 +160,8 @@ class Hider(ag.Agent):
                 dc.pop(dir)
         return [0,0]
         
-
-    def moveRandomGoalAStar(self, environment, seekerInSight):
+    # If you want a random goal, let goal=None
+    def moveGoalAStar(self, environment, seekerInSight, goal=None):
         nr, nc=[environment.rows, environment.columns]
 
         def inside (r, c):    
@@ -222,12 +230,320 @@ class Hider(ag.Agent):
                 if not iswall(r,c):
                     return [r,c]
 
-        if (self.moveRandomGoal_goal is None) or self.position==self.moveRandomGoal_goal:
-            while True:
-                self.moveRandomGoal_goal = findGoal()
-                if (self.position == self.moveRandomGoal_goal):
-                    continue
-                if direct_to_goal(self.position, self.moveRandomGoal_goal) != [-1,-1]:
-                    #print("Hider next goal: ",str(self.moveRandomGoal_goal))
-                    break
-        return direct_to_goal(self.position, self.moveRandomGoal_goal)
+        if (self.moveGoal_goal is None) or self.position==self.moveGoal_goal:
+            if goal is None: # Random goal
+                while True:
+                    self.moveGoal_goal = findGoal()
+                    if (self.position == self.moveGoal_goal):
+                        continue
+                    if direct_to_goal(self.position, self.moveGoal_goal) != [-1,-1]:
+                        #print("Hider next goal: ",str(self.moveGoal_goal))
+                        break
+            else:
+                self.moveGoal_goal = goal
+        if self.position != self.moveGoal_goal:
+            return direct_to_goal(self.position, self.moveGoal_goal)
+        else:
+            return self.position
+
+    def moveTacticV1 (self, environment, seekerInSight, obstacleArray):
+        class TacticV1: # Now don't use obstacleArray yet
+            def __init__ (self, environment, obstacleArray):
+                self.nr=environment.rows
+                self.nc=environment.columns
+                self.map=environment.board # No attempt to change map allowed.
+                self.numMoveSinceSeekerInSight = 0
+                self.lastKnownSeekerLocation = []
+                
+                self.mapDeadEnd=[[0 for j in range(self.nc)] for i in range(self.nr)]
+                self.mapMerriable=[[0 for j in range(self.nc)] for i in range(self.nr)]
+                # self.goalEval=[[0 for j in range(self.nc)] for i in range(self.nr)]
+
+                self.mapReachable=[[0 for j in range(self.nc)] for i in range(self.nr)]
+                self.dr8=[-1,-1,0,1,1,1,0,-1]
+                self.dc8=[0,-1,-1,-1,0,1,1,1]
+                self.dr4=[-1,0,1,0]
+                self.dc4=[0,-1,0,1]
+                self.generateMapDeadEnd(obstacleArray)
+                self.generateMapMerriable(environment, obstacleArray)
+            def generateMapReachable (self, pos, obstacleArrayNowNotProcessed):
+                visit=[[0 for j in range(self.nc)] for i in range(self.nr)]
+                def fill (r,c,fillval):
+                    if not self.inside(r,c) or visit[r][c] == 1:
+                        return
+                    visit[r][c] = 1
+                    self.mapReachable[r][c] = fillval
+                    for i in range(self.nr):
+                        rr, cc = [r+self.dr8[i], c+self.dc8[i]]
+                        fill(rr,cc,fillval)
+
+            def generateMapDeadEnd (self, obstacleArrayNowNotProcessed):
+                def inside (r,c):
+                    return r>=0 and r<self.nr and c>=0 and c<self.nc
+                def deadScore (pos):
+                    ans=0
+                    for i in range(len(self.dr8)):
+                        r,c=[pos[0]+self.dr8[i], pos[1]+self.dc8[i]]
+                        if not inside(r,c):
+                            ans+=1
+                        else:
+                            if self.map[r][c]==1 or self.mapDeadEnd[r][c]==1:
+                                ans+=1
+                    return ans
+                visit=[[0 for j in range(self.nc)] for i in range(self.nr)]
+                q=Queue()
+                for i in range(self.nr):
+                    for j in range(self.nc):
+                        if deadScore([i,j]) >= 7:
+                            self.mapDeadEnd[i][j] = 1
+                            visit[i][j]=1
+                            q.put([i,j])
+                # BFS the dead cells
+                while not q.empty():
+                    r,c = q.get()
+                    for i in range(len(self.dr4)):
+                        rr, cc = [r+self.dr4[i], c+self.dc4[i]]
+                        if inside(rr,cc) and deadScore([rr,cc])>=7 and visit[rr][cc]==0:
+                            self.mapDeadEnd[rr][cc]=1
+                            visit[rr][cc]=1
+                            q.put([rr,cc])
+                return None
+            def inside (self,r,c):
+                return r>=0 and r<self.nr and c>=0 and c<self.nc
+            def generateMapMerriable (self, environment, obstacleArrayNowNotProcessed):
+                visit=[[0 for j in range(self.nc)] for i in range(self.nr)]
+                compo=[[0 for j in range(self.nc)] for i in range(self.nr)]
+
+                lst_compo=[]
+                def fill (r,c,fillval):
+                    if not self.inside(r,c) or visit[r][c] == 1:
+                        return
+                    if self.map[r][c] == 1:
+                        visit[r][c] = 1
+                        compo[r][c] = fillval
+                        lst_compo.append([r,c])
+                        fill(r-1,c,fillval)
+                        fill(r,c-1,fillval)
+                        fill(r+1,c,fillval)
+                        fill(r,c+1,fillval)
+
+                # Return [] if no route found, otherwise [[x1,y1], [x2,y2], ...]
+                # Crude route around a wall component
+                def crudeRoute (fillval):
+                    def strictNeighborOfOne (r, c): # Not itself
+                        for i in range(len(self.dr8)):
+                            rr=r+self.dr8[i]; cc=c+self.dc8[i]
+                            if self.inside(rr,cc) and compo[rr][cc]==fillval:
+                                return True
+                        return False
+                    """
+                    Algorithm:
+                    1. Find top-left cell TL
+                    2. Go 4-dir in order of right, down, left, up, greedily.
+                        Never go into dead-end cells
+                        If can't go, then no crude route is found
+                        If last cell is TL, then crude route found
+                    """
+                    TL=[0,0]
+                    for i in range(self.nr):
+                        foundTL=False
+                        for j in range(self.nc):
+                            if strictNeighborOfOne(i,j):
+                                TL=[i,j]
+                                foundTL=True
+                                break
+                        if foundTL:
+                            break
+
+                    route=[]
+                    cur=TL; dr=[0,1,0,-1]; dc=[1,0,-1,0] # Order of dr and dc somehow important
+                    while True:
+                        route.append(cur)
+                        foundNxt=False
+                        for i in range(len(dr)):
+                            nxt=[cur[0]+dr[i], cur[1]+dc[i]]
+                            if self.inside(nxt[0], nxt[1]) and self.map[nxt[0]][nxt[1]]==0 \
+                                and self.mapDeadEnd[nxt[0]][nxt[1]]==0 and (not nxt in route) \
+                                and strictNeighborOfOne(nxt[0],nxt[1]):
+                                foundNxt=True
+                                cur=nxt
+                                break
+                        if not foundNxt:
+                            break
+                    # 4 dir checking if cur is next to TL
+                    if abs(cur[0]-TL[0])+abs(cur[1]-TL[1]) == 1:
+                        return route
+                    else:
+                        return []
+
+                # Refine with length = 2 only
+                def refineRoute_v1 (route):
+                    while True:
+                        improved=False
+                        n=len(route)
+                        for i in range(n):
+                            j=(i+2)%n
+                            if max(abs(route[i][0]-route[j][0]), abs(route[i][1]-route[j][1]))<2:
+                                improved=True
+                                route.pop((i+1)%n)
+                                break
+                        if not improved:
+                            break
+                    return route
+
+                ncompo=0
+                for i in range(self.nr):
+                    for j in range(self.nc):
+                        if visit[i][j]==0 and self.map[i][j]==1:
+                            ncompo += 1
+                            fill(i,j,ncompo)
+                            rt=crudeRoute(ncompo)
+                            rt=refineRoute_v1(rt)
+                            for cell in rt:
+                                self.mapMerriable[cell[0]][cell[1]]=1
+
+            def beingChased (self):
+                return self.lastKnownSeekerLocation!=[] and self.numMoveSinceSeekerInSight <= 3
+            def merriableGoal(self):
+                return []
+
+            # Tham lam hướng xa seeker nhất mà ít tường nhất
+            def greedyDirection(self, hider, seekerpos, obstacleArray):
+                BONUS_MORE_DISTANCE = 100
+                BONUS_FAVOR_TERRAIN = 1
+
+                dr9=copy.deepcopy(self.dr8)
+                dc9=copy.deepcopy(self.dc8)
+                dr9.append(0); dc9.append(0)
+                
+                def distance (A, B):
+                    return max(abs(A[0]-B[0]), abs(A[1]-B[1]))
+                def num_plain_neighbor (r, c):
+                    ans = 0
+                    for i in range(len(self.dr8)):
+                        rr, cc = [r+self.dr8[i], c+self.dr8[i]]
+                        if self.inside(rr, cc) and self.map[rr][cc]==0:
+                            ans += 1
+                    return ans
+                def total_score (pos):
+                    return distance(pos, seekerpos)*BONUS_MORE_DISTANCE + \
+                        num_plain_neighbor(pos[0],pos[1])*BONUS_FAVOR_TERRAIN
+                
+                Max=0; pos=hider.position; save_pos=pos
+                for i in range(len(dr9)):
+                    tmp = [pos[0]+dr9[i], pos[1]+dc9[i]]
+                    if self.inside(tmp[0],tmp[1]) and self.map[tmp[0]][tmp[1]]==0:
+                        if total_score(tmp) > Max:
+                            Max = total_score(tmp)
+                            save_pos = tmp
+                return save_pos
+                
+            def merry_go_round (self, hider, seekerpos, obstacleArray):
+
+                BONUS_AWAY_FROM_SEEKER = 1000
+                BONUS_DIAGONAL = 5  # Favor diagonal than UDLR direction
+                BONUS_PLAIN_NEIGHBOR = 1 # Favor most-walled (bc merry-go-round)
+
+                dr9=copy.deepcopy(self.dr8)
+                dc9=copy.deepcopy(self.dc8)
+                dr9.append(0); dc9.append(0)
+
+                # Shuffle to make it random between ties
+                dxy = list(zip(dr9, dc9))
+                random.shuffle(dxy)
+                for i in range(len(dxy)):
+                    dr9[i]=dxy[i][0]; dc9[i]=dxy[i][1]
+                
+                def distance (A, B):
+                    return max(abs(A[0]-B[0]), abs(A[1]-B[1]))
+                def terrain_score (r, c):
+                    ans = 0
+                    for i in range(len(self.dr8)):
+                        rr, cc = [r+self.dr8[i], c+self.dr8[i]]
+                        if self.inside(rr, cc) and self.map[rr][cc]==0:
+                            ans += BONUS_PLAIN_NEIGHBOR
+                    return ans
+                def total_eval (pos, attempt):
+                    ans=distance(attempt,seekerpos)*BONUS_AWAY_FROM_SEEKER
+                    if min(abs(pos[0]-attempt[0]), abs(pos[1]-attempt[1]))==1:
+                        ans += BONUS_DIAGONAL
+                    ans += terrain_score(attempt[0], attempt[1])
+                    return ans
+                
+                Max=0; pos=hider.position; save_pos=pos
+                for i in range(len(dr9)):
+                    tmp = [pos[0]+dr9[i], pos[1]+dc9[i]]
+                    if self.inside(tmp[0],tmp[1]) and self.map[tmp[0]][tmp[1]]==0 \
+                        and self.mapMerriable[tmp[0]][tmp[1]]==1:
+                        if total_eval(pos, tmp) > Max:
+                            Max = total_eval(pos,tmp)
+                            save_pos = tmp
+                return save_pos
+
+            def normalGoal (self, hider, obstacleArray, environment, seekerInSight):
+                # Merriable > Plain > "Corner" > sidewall > deadend
+                # The nearer, the better
+                # Favor most walled Merriable, least walled unmerriable
+                BONUS_MERRIABLE = 1000
+                BONUS_PLAIN_NEIGHBOR = 10
+                PENALTY_DEADEND = 1000000
+                PENALTY_HEURISTIC_DISTANCE = 3
+                PENALTY_UNREACHABLE = 100000000
+
+                goalEval=[[0 for j in range(self.nc)] for i in range(self.nr)]
+                pos=hider.position
+                def terrain_score (r, c):
+                    ans = 0
+                    for i in range(len(self.dr8)):
+                        rr, cc = [r+self.dr8[i], c+self.dr8[i]]
+                        if self.inside(rr, cc) and self.map[rr][cc]==0:
+                            ans += BONUS_PLAIN_NEIGHBOR
+                    return ans
+                
+                def distance_score (r1, c1, r2, c2):
+                    dis = max(abs(r1-c1), abs(r2-c2))
+                    return PENALTY_HEURISTIC_DISTANCE * dis
+                self.generateMapReachable(pos, obstacleArray)
+
+                Max=-999999999999; save_goal=pos
+                for i in range(self.nr):
+                    for j in range(self.nc):
+                        if self.mapReachable[i][j] == 0:
+                            goalEval[i][j] -= PENALTY_UNREACHABLE
+                        if self.mapMerriable[i][j] == 1:
+                            goalEval[i][j] += BONUS_MERRIABLE
+                            # For merriable, more-walled is better
+                            goalEval[i][j] -= terrain_score(i,j)
+                        else:
+                            goalEval[i][j] += terrain_score(i,j)
+                        if self.mapDeadEnd[i][j] == 1:
+                            goalEval[i][j] -= PENALTY_DEADEND
+                        
+                        goalEval[i][j] -= distance_score(i,j,pos[0],pos[1])
+
+                        if (goalEval[i][j] > Max):
+                            Max=goalEval[i][j]
+                            save_goal=[i,j]
+                return hider.moveGoalAStar(environment, seekerInSight, save_goal)
+
+
+            def move (self, hider, environment, seekerInSight, obstacleArray): # Refer to flow chart tactic V1
+                if (seekerInSight is not None):
+                    self.numMoveSinceSeekerInSight = 0
+                    self.lastKnownSeekerLocation = seekerInSight
+                else:
+                    self.numMoveSinceSeekerInSight += 1
+                
+                if self.beingChased ():
+                    if self.mapMerriable[hider.position[0]][hider.position[1]] == 1:
+                        return self.merry_go_round(hider, self.lastKnownSeekerLocation, obstacleArray)
+                    tmp = self.merriableGoal()
+                    if (tmp != []):
+                        return hider.moveGoalAStar(environment, seekerInSight, tmp) # A* direct to goal
+                    return self.greedyDirection(hider, self.lastKnownSeekerLocation, obstacleArray)
+                else:
+                    return self.normalGoal(hider, obstacleArray, environment, seekerInSight)
+
+        if self.tactic_v1 is None:
+            self.tactic_v1 = TacticV1(environment, obstacleArray)
+        return self.tactic_v1.move(self,environment,seekerInSight,obstacleArray)

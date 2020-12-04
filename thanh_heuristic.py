@@ -24,11 +24,16 @@ class thanh:
         self.print_to_console = ""
         self.heuristic_map_copy = copy.deepcopy(self.heuristic_map)
 
-    def bonus_each_round(self):
-        for i in range(self.row):
-            for j in range(self.column):
-                if self.map[i][j] == 0:
-                    self.heuristic_map[i][j] -= 0.5
+    def shuffle_neighbor_step(self):
+        shuffle_list = []
+        for i in range(8):
+            shuffle_list.append([self.move_x[i],self.move_y[i]])
+        seed = random.randint(1,999999)
+        random.seed(seed)
+        random.shuffle(shuffle_list)
+        for i in range(8):
+            self.move_x[i] = shuffle_list[i][0]
+            self.move_y[i] = shuffle_list[i][1]
 
     def generate_heuristic(self):
         for i in range(self.row):
@@ -53,17 +58,6 @@ class thanh:
                 file.write(str(int(self.heuristic_map[i][j])) + '  ')
             file.write('\n')
         file.close()
-
-    def spacebar(self,num):
-        if num == 0:
-            return '    '
-        elif math.log10(int(num)) < 1:
-            return '    '
-        elif math.log10(int(num)) < 2:
-            return '   '
-        elif math.log10(int(num)) < 3:
-            return '  ' 
-        return ' '
 
     def calculate_heuristic(self, x, y):
         #init
@@ -130,7 +124,7 @@ class thanh:
         self.goalx = sort_array[0][0] ; self.goaly = sort_array[0][1]
         goal_x = self.goalx ; goal_y = self.goaly
 
-        self.request_print("chase mode next goal: " + str(str(goal_x) + ' ' + str(goal_y) + ' ' + str(self.heuristic_map[goal_x,goal_y])))
+        self.request_print("chase: next goal: " + str(str(goal_x) + ' ' + str(goal_y) + ' ' + str(self.heuristic_map[goal_x,goal_y])))
 
         ret_x, ret_y = self.direct_to_goal(x,y,[goal_x,goal_y])
 
@@ -201,6 +195,8 @@ class thanh:
             self.breakpoint()
             if goal_x == -1 and goal_y == -1:
                 self.request_print("neutralize all spots, terminate!!!")
+                self.restart_heuristic_map()
+                self.request_print("TRIGGER: heuristic map restart")
             else:
                 self.request_print("could not find a path to goal or already at goal")
             return -1,-1
@@ -222,6 +218,9 @@ class thanh:
         self.penalty_vision(vision_map,save_x,save_y,goal_x,goal_y)
         return save_x, save_y
 
+    def restart_heuristic_map(self):
+        self.heuristic_map = copy.deepcopy(self.heuristic_map_copy)
+
     def bonus_announce(self,announce_loc):
         self.request_print("announce bonus at " + str(announce_loc[0]))
         for k in range(len(announce_loc)):
@@ -231,17 +230,14 @@ class thanh:
                     x = curr_x + i
                     y = curr_y + j
                     if x >= 0 and x < self.row and y >= 0 and y < self.column and self.map[x][y] == 0:
-                        self.heuristic_map[x][y] -= 2
+                        self.heuristic_map[x][y] -= self.basic_heuristic[x][y]/10
 
     def make_move(self, x, y, vision_map, announce_loc, hider_loc):
         if hider_loc != []:
             save_x,save_y = self.chase_mode(x,y,vision_map ,hider_loc)
         else:
             if announce_loc != []:
-                if announce_loc[0] != [-1,-1]:
-                    self.bonus_announce(announce_loc)
-                else:
-                    self.request_print("ahihi cu lua tu le minh")
+                self.bonus_announce(announce_loc)
             save_x,save_y = self.explore_mode(x,y,vision_map)
         if save_x == -1 and save_y == -1:
             while save_x < 0 or save_y < 0 or save_x >= self.row or save_y >= self.column or self.map[save_x][save_y]==1:
@@ -296,6 +292,7 @@ class thanh:
             x = save_x; y = save_y; array.pop(save_i)
 
             #find all possible moves for current step
+            self.shuffle_neighbor_step()
             for i in range(8):
                 xx = x + self.move_x[i]
                 yy = y + self.move_y[i]
@@ -394,9 +391,3 @@ class thanh:
         
     def breakpoint(self):
         return
-
-            
-
-
-    
-        
