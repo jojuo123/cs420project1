@@ -1,5 +1,6 @@
 import copy
 import Environment
+import Obstacle as obs
 
 class Agent:
     def __init__(self, positionx, positiony, sight):
@@ -12,7 +13,7 @@ class Agent:
     def push(self):
         pass
 
-    def getVision(self, environment):
+    def getVision(self, environment, obstacleArray):
         #return mang 2d {0,1} 
         #0 la ko co sight
         #1 la co sight

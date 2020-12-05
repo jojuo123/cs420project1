@@ -24,11 +24,16 @@ class thanh:
         self.print_to_console = ""
         self.heuristic_map_copy = copy.deepcopy(self.heuristic_map)
 
-    def bonus_each_round(self):
-        for i in range(self.row):
-            for j in range(self.column):
-                if self.map[i][j] == 0:
-                    self.heuristic_map[i][j] -= 0.5
+    def shuffle_neighbor_step(self):
+        shuffle_list = []
+        for i in range(8):
+            shuffle_list.append([self.move_x[i],self.move_y[i]])
+        seed = random.randint(1,999999)
+        random.seed(seed)
+        random.shuffle(shuffle_list)
+        for i in range(8):
+            self.move_x[i] = shuffle_list[i][0]
+            self.move_y[i] = shuffle_list[i][1]
 
     def generate_heuristic(self):
         for i in range(self.row):
@@ -53,17 +58,6 @@ class thanh:
                 file.write(str(int(self.heuristic_map[i][j])) + '  ')
             file.write('\n')
         file.close()
-
-    def spacebar(self,num):
-        if num == 0:
-            return '    '
-        elif math.log10(int(num)) < 1:
-            return '    '
-        elif math.log10(int(num)) < 2:
-            return '   '
-        elif math.log10(int(num)) < 3:
-            return '  ' 
-        return ' '
 
     def calculate_heuristic(self, x, y):
         #init
@@ -130,7 +124,7 @@ class thanh:
         self.goalx = sort_array[0][0] ; self.goaly = sort_array[0][1]
         goal_x = self.goalx ; goal_y = self.goaly
 
-        self.request_print("chase mode next goal: " + str(str(goal_x) + ' ' + str(goal_y) + ' ' + str(self.heuristic_map[goal_x,goal_y])))
+        self.request_print("chase: next goal: " + str(str(goal_x) + ' ' + str(goal_y) + ' ' + str(self.heuristic_map[goal_x,goal_y])))
 
         ret_x, ret_y = self.direct_to_goal(x,y,[goal_x,goal_y])
 
@@ -236,7 +230,7 @@ class thanh:
                     x = curr_x + i
                     y = curr_y + j
                     if x >= 0 and x < self.row and y >= 0 and y < self.column and self.map[x][y] == 0:
-                        self.heuristic_map[x][y] -= 2
+                        self.heuristic_map[x][y] -= self.basic_heuristic[x][y]/10
 
     def make_move(self, x, y, vision_map, announce_loc, hider_loc):
         if hider_loc != []:
@@ -298,6 +292,7 @@ class thanh:
             x = save_x; y = save_y; array.pop(save_i)
 
             #find all possible moves for current step
+            self.shuffle_neighbor_step()
             for i in range(8):
                 xx = x + self.move_x[i]
                 yy = y + self.move_y[i]
@@ -396,9 +391,3 @@ class thanh:
         
     def breakpoint(self):
         return
-
-            
-
-
-    
-        
