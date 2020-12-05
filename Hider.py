@@ -304,17 +304,18 @@ class Hider(ag.Agent):
                 q=Queue()
                 for i in range(self.nr):
                     for j in range(self.nc):
-                        if deadScore([i,j]) >= 7 and self.map[i][j]==0:
+                        if self.map[i][j]==0 and deadScore([i,j]) >= 7:
                             self.mapDeadEnd[i][j] = 1
                             visit[i][j]=1
                             q.put([i,j])
                 # BFS the dead cells
                 while not q.empty():
                     r,c = q.get()
+                    if c==0:
+                        x=42
                     for i in range(len(self.dr4)):
                         rr, cc = [r+self.dr4[i], c+self.dc4[i]]
-                        if inside(rr,cc) and deadScore([rr,cc])>=7 and visit[rr][cc]==0 \
-                            and self.map[rr][cc]==0:
+                        if inside(rr,cc) and self.map[rr][cc]==0 and deadScore([rr,cc])>=7 and visit[rr][cc]==0:
                             self.mapDeadEnd[rr][cc]=1
                             visit[rr][cc]=1
                             q.put([rr,cc])
