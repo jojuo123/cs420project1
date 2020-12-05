@@ -194,13 +194,15 @@ class Engine:
         #print("Seeker move to: ",str(self.seeker.position))
         #print(self.seeker.position)
         self.announceList = []
+        remainingHiders = []
         for hider in self.hiders:
             if self.checkDie(self.seeker, hider):
                 hider.Dead()
                 self.UpdateScore(True)
                 self.deadhiders.append(hider)
-                self.hiders.remove(hider)
+                #self.hiders.remove(hider)
                 continue
+            remainingHiders.append(hider)
             hiderVision = hider.getVision(self.environment, self.obstacles)
             seekerInSight = self.showSight(visionMap=hiderVision, isSeeker=False, prevSeekerPosition=prevSeekerPosition)
 
@@ -222,6 +224,7 @@ class Engine:
             if not announcePosition is None:
                 #print ("Hider announce at: "+str(announcePosition))
                 self.announceList.append(copy.deepcopy(announcePosition))
+        self.hiders=remainingHiders
 
     def isEnd(self):
         # if self.TurnLimit() <= self.turn:
