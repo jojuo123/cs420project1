@@ -220,7 +220,7 @@ class Engine:
                     continue
             announcePosition = hider.Announce(self.environment, self.obstacles)
             if not announcePosition is None:
-                print ("Hider announce at: "+str(announcePosition))
+                #print ("Hider announce at: "+str(announcePosition))
                 self.announceList.append(copy.deepcopy(announcePosition))
 
     def isEnd(self):
