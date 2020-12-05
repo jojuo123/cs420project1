@@ -57,6 +57,23 @@ def get_file():
     file_name += entries[file_num-1]
     
     return file_name,level
+"""
+def get_file(level_test, map_test):
+    file_name = "map/level"
+    #level = int(input("choose level: "))
+    level = level_test
+    
+    file_name += str(level) + '/'
+    entries = os.listdir(file_name)
+
+    for i in range(len(entries)):
+        print(i+1, entries[i])
+    #file_num = int(input("choose file number: "))
+    file_num = map_test
+    file_name += entries[file_num-1]
+    
+    return file_name,level
+   """ 
 
 def get_new_color():
     old_color = True
@@ -168,6 +185,9 @@ def print_summary(level,file_path,status, total_run_time, score, seeker_steps, t
     print("Seeker steps: " + str(seeker_steps))
     print("\nSeeker score: " + str(score))
     print("\n\n\n\n\n\n-----------------------------------------------------------------------")
+    # file = open("experiment/level3.txt", "a")
+    # file.write("{},{},{}\n".format(str(score), str(seeker_steps), str(total_run_time)))
+    # file.close()
 
 def get_key(element):
     return element[0]
@@ -304,3 +324,140 @@ if __name__=='__main__':
 
 
 
+"""
+if __name__=='__main__':
+    level = 3
+    for map in range(1,10):
+        # init necessary components
+        used_color.sort(key = get_key)
+        visual_map = []
+        total_row = 0
+        total_column = 0
+        MAP_FILE, engine_level = get_file(level, map)
+
+        for i in range(10):
+            CURRENT_TURN = 0
+
+            #lay map tu file 'map.txt'
+            total_row, total_column, board, seeker, hiders,obs_list = import_map(MAP_FILE)
+            environment = env.Environment(board, total_row, total_column)
+            #khoi tao hider va seeker
+            #hiders = []
+            #seeker = seek.Seeker(0, 1, 3, 5)
+            #hiders.append(hide.Hider(0, 0, 3))
+            #hiders.append(hide.Hider(29, 26, 3))
+            #khoi tao engine
+            engine = eng.Engine(environment=environment, hiders=hiders, seeker=seeker,obstacles = obs_list)
+            engine.setLevel(engine_level)
+
+            visual_map = update_visual_map(engine)
+
+            begin = time.time()
+            check_point = begin
+            # Initialize pygame
+            pygame.init()
+        
+            # Set the HEIGHT and WIDTH of the screen
+            screen_height = total_column*WIDTH + MARGIN*(total_column+1)
+            screen_width = total_row*HEIGHT + MARGIN*(total_row+1)
+            WINDOW_SIZE = [screen_height, screen_width]
+            screen = pygame.display.set_mode(WINDOW_SIZE)
+        
+            # Set title of screen
+            pygame.display.set_caption("hide and seek test")
+        
+            # Loop until the user clicks the close button.
+            done = False
+        
+            # Used to manage how fast the screen updates
+            clock = pygame.time.Clock()
+
+            #main loop
+            timing = time.time()
+            debug = True
+            while not done:
+                for event in pygame.event.get():  # User did something
+                    if event.type == pygame.QUIT:  # If user clicked close
+                        done = True  # Flag that we are done so we exit this loop
+                if done:
+                    break
+                screen.fill(BLACK)
+
+                visual_map = update_visual_map(engine)
+                
+                #seeker vision
+                seenable = engine.seeker.getVision(engine.environment, engine.obstacles)
+                for i in range(len(seenable)):
+                        for j in range(len(seenable[0])):
+                            if visual_map[i][j] == 0 and seenable[i][j] == 1:
+                                visual_map[i][j] = 5
+                
+                #hider vision
+                for i in range(len(engine.hiders)):
+                    seenable = engine.hiders[i].getVision(engine.environment, engine.obstacles)
+                    for i in range(len(seenable)):
+                            for j in range(len(seenable[0])):
+                                if visual_map[i][j] == 0 and seenable[i][j] == 1:
+                                    visual_map[i][j] = 6
+
+                #gameplay
+                wait_time = time.time() - timing
+                if time.time() - timing >= MAX_WAIT_TIME:
+                    #set caption
+                    time_passed = str("%.2f" % (time.time() - begin)) + "s"
+                    score = engine.score
+                    caption = set_caption(engine_level,time_passed,TIME_LIMIT,score)
+                    pygame.display.set_caption(caption)
+
+                    #engine do
+                    CURRENT_TURN += 1
+                    engine.play()
+                    done = engine.isEnd()
+                    seeker_score = engine.score
+                    curr_time = int(time.time() - begin)
+                    time_passed = str("%.2f" % (time.time() - begin)) + "s"
+                    if done or CURRENT_TURN >= TURN_LIMIT or curr_time >= TIME_LIMIT:
+                        if CURRENT_TURN >= TURN_LIMIT:
+                            status = "SEEKER RUNS OUT OF TURN"
+                        elif curr_time >= TIME_LIMIT:
+                            status = "SEEKER RUNS OUT OF TIME"
+                        else:
+                            status = "SEEKER COMPLETES THIS ROUND"
+                        print_summary(engine_level, MAP_FILE, status, time_passed,score,CURRENT_TURN,TURN_LIMIT,TIME_LIMIT)
+                        done = True
+                    timing = time.time()
+                
+                for row in range(total_row):
+                    for column in range(total_column):
+                        #color = WHITE
+                        #if visual_map[row][column] == 1:
+                        #    color = DARK_GREY
+                        #elif visual_map[row][column] == 3:
+                        #    color = RED
+                        #elif visual_map[row][column] == 2:
+                        #    color = GREEN
+                        #elif visual_map[row][column] == 4:
+                        #    color = WOOD
+                        #elif visual_map[row][column] == 998:
+                        #    color = PINK
+                        #elif visual_map[row][column] == 999:
+                        #    color = LIGHT_CYAN
+                        color = used_color[visual_map[row][column]][1]
+                        pygame.draw.rect(screen,
+                                        color,
+                                        [(MARGIN + WIDTH) * column + MARGIN,
+                                        (MARGIN + HEIGHT) * row + MARGIN,
+                                        WIDTH,
+                                        HEIGHT])
+                
+                # Limit to 60 frames per second
+                clock.tick(60)
+        
+                # Go ahead and update the screen with what we've drawn.
+                pygame.display.flip()
+        
+                # Be IDLE friendly. If you forget this line, the program will 'hang'
+                # on exit.
+            pygame.quit()
+
+    """

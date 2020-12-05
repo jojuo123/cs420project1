@@ -11,7 +11,7 @@ RED = (255, 0, 0)
 BLUE = (0, 0 , 255)
 DARK_GREY = (128, 128, 128)
 WOOD = (202,164,114)
-MAP_FILE = "map/level1/map.txt"
+MAP_FILE = "map/level1/map7.txt"
  
 # This sets the WIDTH and HEIGHT of each grid location
 WIDTH = 20

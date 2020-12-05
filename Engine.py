@@ -10,7 +10,7 @@ class Engine:
         self.environment = copy.deepcopy(environment)
         self.seeker = copy.deepcopy(seeker)
         self.hiders = copy.deepcopy(hiders)
-        self.score = 0
+        self.score = 1000
         self.turn = 0
         self.announceList = []
         self.level = 1
