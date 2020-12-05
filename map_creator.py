@@ -27,34 +27,41 @@ total_row = 30
 total_column = 30
 
 def import_map(file_name):
-    file = open(file_name,"r")
-    lines = file.readlines()
+    try:
+        file = open(file_name,"r")
+    except:
+        total_row = int(input("No. row: "))
+        total_column = int(input("No col: "))
+        grid = np.zeros((total_row,total_column),dtype = int)
+        return total_row, total_column, grid, [] ,[] ,[]
+    else:
+        lines = file.readlines()
 
-    data = []
-    for line in lines:
-        number_strings = line.split() # Split the line on runs of whitespace
-        numbers = [int(n) for n in number_strings] # Convert to integers
-        data.append(numbers) # Add the "row" to your list.
-    total_row = data[0][0]
-    total_column = data[0][1]
-    data.pop(0)
-    file.close()
-    hiders = []
-    seeker = 0
-    obs_list = []
-    for i in range(total_row):
-        for j in range(total_column):
-            if data[i][j] == 3: #seeker pos
-                data[i][j] = 3
-            elif data[i][j] == 2: #hider pos
-                data[i][j] = 2
+        data = []
+        for line in lines:
+            number_strings = line.split() # Split the line on runs of whitespace
+            numbers = [int(n) for n in number_strings] # Convert to integers
+            data.append(numbers) # Add the "row" to your list.
+        total_row = data[0][0]
+        total_column = data[0][1]
+        data.pop(0)
+        file.close()
+        hiders = []
+        seeker = 0
+        obs_list = []
+        for i in range(total_row):
+            for j in range(total_column):
+                if data[i][j] == 3: #seeker pos
+                    data[i][j] = 3
+                elif data[i][j] == 2: #hider pos
+                    data[i][j] = 2
 
-    for i in range(total_row, len(data)):
-        obs_ = obs.Obstacle([data[i][0],data[i][1]],[data[i][2]-data[i][0]+1,data[i][3]-data[i][1]+1],WOOD)
-        obs_list.append(obs_)
-    while len(data) > total_row:
-        data.pop(total_row)
-    return total_row, total_column, data,seeker,hiders,obs_list
+        for i in range(total_row, len(data)):
+            obs_ = obs.Obstacle([data[i][0],data[i][1]],[data[i][2]-data[i][0]+1,data[i][3]-data[i][1]+1],WOOD)
+            obs_list.append(obs_)
+        while len(data) > total_row:
+            data.pop(total_row)
+        return total_row, total_column, data,seeker,hiders,obs_list
 
 def visualize_agents(board,seeker,hider):
     if check_valid_coor(board,seeker.position[0],seeker.position[1]):

@@ -77,8 +77,10 @@ class Engine:
                 for j in range(obstacle.upperLeft[1], obstacle.upperLeft[1] + obstacle.size[1]):
                     tmpboard[i][j] = 1
         
+        direction = ''
         for obstacle in self.obstacles:
             isMoveable = True
+            obstacle.reset_push()
             if (obstacle.upperLeft[0] == AgentPosition[0] - 1) and (obstacle.upperLeft[1] <= AgentPosition[1] <= obstacle.upperLeft[1] + obstacle.size[1] - 1) and (obstacle.size[0] == 1): #up
                 for i in range(obstacle.upperLeft[1], obstacle.upperLeft[1] + obstacle.size[1]):
                     if isInside(obstacle.upperLeft[0] - 1, i, self.environment.rows, self.environment.columns):
@@ -92,6 +94,8 @@ class Engine:
                     else:
                         isMoveable = False
                         break
+                if isMoveable:
+                    obstacle.up = True
             if (obstacle.upperLeft[0] == AgentPosition[0] + 1) and (obstacle.upperLeft[1] <= AgentPosition[1] <= obstacle.upperLeft[1] + obstacle.size[1] - 1) and (obstacle.size[0] == 1): #down
                 for i in range(obstacle.upperLeft[1], obstacle.upperLeft[1] + obstacle.size[1]):
                     if isInside(obstacle.upperLeft[0] + 1, i, self.environment.rows, self.environment.columns):
@@ -105,6 +109,8 @@ class Engine:
                     else:
                         isMoveable = False
                         break
+                if isMoveable:
+                    obstacle.down = True
             if (obstacle.upperLeft[1] == AgentPosition[1] - 1) and (obstacle.upperLeft[0] <= AgentPosition[0] <= obstacle.upperLeft[0] + obstacle.size[0] - 1) and (obstacle.size[1] == 1): #left
                 for i in range(obstacle.upperLeft[0], obstacle.upperLeft[0] + obstacle.size[0]):
                     if isInside(i, obstacle.upperLeft[1] - 1, self.environment.rows, self.environment.columns):
@@ -118,6 +124,8 @@ class Engine:
                     else:
                         isMoveable = False
                         break
+                if isMoveable:
+                    obstacle.left - True
             if (obstacle.upperLeft[1] == AgentPosition[1] + 1) and (obstacle.upperLeft[0] <= AgentPosition[0] <= obstacle.upperLeft[0] + obstacle.size[0] - 1) and (obstacle.size[1] == 1): #right
                 for i in range(obstacle.upperLeft[0], obstacle.upperLeft[0] + obstacle.size[0]):
                     if isInside(i, obstacle.upperLeft[1] + 1, self.environment.rows, self.environment.columns):
@@ -131,6 +139,8 @@ class Engine:
                     else:
                         isMoveable = False
                         break
+                if isMoveable:
+                    obstacle.right = True
             if isMoveable:
                 result.append(copy.deepcopy(obstacle))
         return result
@@ -210,7 +220,7 @@ class Engine:
                     continue
             announcePosition = hider.Announce(self.environment, self.obstacles)
             if not announcePosition is None:
-                print ("Hider announce at: "+str(announcePosition))
+                #print ("Hider announce at: "+str(announcePosition))
                 self.announceList.append(copy.deepcopy(announcePosition))
 
     def isEnd(self):

@@ -427,7 +427,9 @@ class thanh:
     def __init__(self, map):
         self.row = len(map)
         self.column = len(map[0])
+        #wall + obs every turn
         self.map = copy.deepcopy(map)
+        #original wall
         self.map_copy = copy.deepcopy(map)
         self.heuristic_map = np.zeros((self.row,self.column))
         self.basic_heuristic = np.zeros((self.row,self.column))
@@ -442,8 +444,11 @@ class thanh:
         self.goalx = -1
         self.goaly = -1
         self.print_to_console = ""
+        #cannot change this copy
         self.heuristic_map_copy = copy.deepcopy(self.heuristic_map)
+        #feel free to change this copy
         self.heuristic_map_copy_temp = copy.deepcopy(self.heuristic_map)
+        self.reachable_map = None
 
     def check_pushable_obs(self, obs,pushable_obs_list):
         if pushable_obs_list is None or pushable_obs_list == []:
@@ -452,18 +457,6 @@ class thanh:
             if obs.upperLeft == pushable_obs_list[i].upperLeft:
                 return False
         return True
-
-    def make_obs_wall(self,obs_list,pushable_obs_list):
-        self.map = copy.deepcopy(self.map_copy)
-        self.heuristic_map = copy.deepcopy(self.heuristic_map_copy_temp)
-        for i in range(len(obs_list)):
-            if self.check_pushable_obs(obs_list[i],pushable_obs_list):
-                row = obs_list[i].size[0]
-                col = obs_list[i].size[1]
-                for j in range(obs_list[i].upperLeft[0], obs_list[i].upperLeft[0]+row):
-                    for k in range(obs_list[i].upperLeft[1], obs_list[i].upperLeft[1]+col):
-                        self.map[j][k] = 1
-                        self.heuristic_map[j][k] = 0
 
     def shuffle_neighbor_step(self):
         shuffle_list = []
@@ -592,12 +585,12 @@ class thanh:
         return ret_x, ret_y
 
     def request_print(self, str):
-        return None
         if (str != self.print_to_console):
             self.print_to_console = str
             print(self.print_to_console)
 
     def explore_mode(self, x,y, vision_map):
+        test_x = x ; test_y = y
         def get_key(element):
             return element[2]
 
@@ -607,7 +600,7 @@ class thanh:
             sort_array = []
             for i in range(self.row):
                 for j in range(self.column):
-                    if i != x and y != j:
+                    if i != x and y != j and self.reachable_map[i][j] == 1:
                         sort_array.append([i,j,self.heuristic_map[i][j]])
             sort_array.sort(key = get_key)
 
@@ -627,25 +620,32 @@ class thanh:
 
             return ret_x,ret_y
 
+        #if goal is not set -> find a new goal
         if self.goalx == -1 and self.goaly == -1:
             goal_x, goal_y = find_next_goal(x,y)
             self.goalx = goal_x ; self.goaly = goal_y
         else:
-            goal_x = self.goalx ; goal_y = self.goaly
+            #if goal is current step -> find a new goal
+            if self.goalx == x and self.goaly == y:
+                goal_x, goal_y = find_next_goal(x,y)
+            else:
+                goal_x = self.goalx ; goal_y = self.goaly
 
         save_x = -1 ; save_y = -1
         save_x, save_y = self.direct_to_goal(x,y,[goal_x,goal_y])
         if save_x == -1 or save_y == -1 or goal_x == -1 or goal_y == -1:
             self.breakpoint()
-            if goal_x == -1 and goal_y == -1:
+            #goal is not valid
+            if goal_x == -1 or goal_y == -1:
                 self.request_print("neutralize all spots, terminate!!!")
                 self.restart_heuristic_map()
                 self.request_print("TRIGGER: heuristic map restart")
-            else:
-                self.request_print("could not find a path to goal or already at goal: " + str(goal_x) + ' ' + str(goal_y))
+            #step is not valid
+            elif save_x == -1 or save_y == -1:
+                self.request_print("WARNING: could not find a path to goal: " + str(goal_x) + ' ' + str(goal_y))
                 min_x,min_y = self.global_max()
                 self.heuristic_map[goal_x][goal_y] = self.heuristic_map[min_x][min_y]
-                self.request_print("Neutralized goal at: " + str(goal_x) + ' ' + str(goal_y) + " with " + str(self.heuristic_map[goal_x][goal_y]))
+                self.request_print("WARNING: neutralized goal at: " + str(goal_x) + ' ' + str(goal_y) + " with " + str(self.heuristic_map[goal_x][goal_y]))
                 self.goalx = -1 ; self.goaly = -1
             return -1,-1
         self.request_print("next goal: " + str(goal_x) + ' ' + str(goal_y) + ' ' + str(self.heuristic_map[goal_x,goal_y]))
@@ -658,11 +658,11 @@ class thanh:
             self.previous_goal_x = goal_x
             self.previous_goal_y = goal_y
         is_goal = False
-        if (x == self.previous_goal_x and y == self.previous_goal_y):
+        if (test_x == self.previous_goal_x and test_y == self.previous_goal_y):
             is_goal = True
 
         self.previous_x = x ; self.previous_y = y
-        self.penalty(is_goal,x,y)
+        self.penalty(is_goal,test_x,test_y)
         self.penalty_vision(vision_map,save_x,save_y,goal_x,goal_y)
         return save_x, save_y
 
@@ -680,13 +680,84 @@ class thanh:
                     if x >= 0 and x < self.row and y >= 0 and y < self.column and self.map[x][y] == 0:
                         self.heuristic_map[x][y] -= 2
 
+    #trigger after map is updated with obs
+    def discover_by_bfs(self, x,y):
+        self.reachable_map = np.zeros((self.row,self.column))
+        self.reachable_map[x][y] = 1
+        array = [[x,y]]
+        while (array != []):
+            #find all cells to be extended
+            curr_x = array[0][0] ; curr_y = array[0][1]
+            for i in range(8):
+                xx = self.move_x[i] + curr_x
+                yy = self.move_y[i] + curr_y
+                if xx >= 0 and xx < self.row and yy >= 0 and yy < self.column and self.reachable_map[xx][yy] == 0 and self.map[xx][yy] == 0:
+                    array.append([xx,yy])
+                    self.reachable_map[xx][yy] = 1
+            array.pop(0)
+        #print(self.reachable_map)
+        #os.system("pause")
+
+    def make_obs_wall(self,obs_list,pushable_obs_list):
+        self.map = copy.deepcopy(self.map_copy)
+        self.heuristic_map_copy_temp = copy.deepcopy(self.heuristic_map)
+        for i in range(len(obs_list)):
+            #if self.check_pushable_obs(obs_list[i],pushable_obs_list):
+                row = obs_list[i].size[0]
+                col = obs_list[i].size[1]
+                for j in range(obs_list[i].upperLeft[0], obs_list[i].upperLeft[0]+row):
+                    for k in range(obs_list[i].upperLeft[1], obs_list[i].upperLeft[1]+col):
+                        self.map[j][k] = 1
+                        self.heuristic_map[j][k] = 0 
+
+    def try_pushing(self, x,y, pushable_obs_list):
+        #simulate possible obs around seeker
+        simulate_obs_map = np.zeros((self.row, self.column))
+        for i in range(len(pushable_obs_list)):
+            row = pushable_obs_list[i].size[0]
+            col = pushable_obs_list[i].size[1]
+            for j in range(pushable_obs_list[i].upperLeft[0], pushable_obs_list[i].upperLeft[0]+row):
+                for k in range(pushable_obs_list[i].upperLeft[1], pushable_obs_list[i].upperLeft[1]+col):
+                    simulate_obs_map[j][k] = i+1
+        save_res_array = []
+        #check neighbor step
+        for i in range(8):
+            next_x = x + self.move_x[i]
+            next_y = y + self.move_y[i]
+            #check violate obs, if simulate_map is not zero -> occupied
+            if simulate_obs_map[next_x][next_y] != 0:
+                obs_code = simulate_obs_map[next_x][next_y] - 1
+                #check the right direction to push
+                if next_x - x > 0 and pushable_obs_list[obs_code].down:
+                    #move obs to new position: take out -> put back in
+                    for j in range(pushable_obs_list[obs_code].upperLeft[0], pushable_obs_list[obs_code].upperLeft[0]+row):
+                        for k in range(pushable_obs_list[obs_code].upperLeft[1], pushable_obs_list[obs_code].upperLeft[1]+col):
+                            self.map[j][k] = 0
+                            self.heuristic_map[j][k] = self.heuristic_map_copy[j][k]
+                    pushable_obs_list[obs_code].move("down")
+                    for j in range(pushable_obs_list[obs_code].upperLeft[0], pushable_obs_list[obs_code].upperLeft[0]+row):
+                        for k in range(pushable_obs_list[obs_code].upperLeft[1], pushable_obs_list[obs_code].upperLeft[1]+col):
+                            self.map[j][k] = 1
+                            self.heuristic_map[j][k] = 0
+                    best_res = self.accessible_global_min(next_x,next_y)
+                    save_res_array.append([next_x,next_y,])
+                #elif next_x - x < 0 and pushable_obs_list[obs_code].up:
+                    #do something
+                #if next_y - y > 0 and pushable_obs_list[obs_code].right:
+                    #do something
+                #elif next_y - y < 0 and pushable_obs_list[obs_code].left:
+                    #do something
+                    
+            
+
     def make_move(self, x, y, vision_map, announce_loc, hider_loc,obs_list1, pushable_obs_list1):
         obs_list = copy.deepcopy(obs_list1)
         pushable_obs_list = copy.deepcopy(pushable_obs_list1)
 
         #make obs all wall if obs can't be pushed
         self.make_obs_wall(obs_list,pushable_obs_list)
-        
+        self.discover_by_bfs(x,y)
+
         #hider is spotted
         if hider_loc != []:
             save_x,save_y = self.chase_mode(x,y,vision_map ,hider_loc)
@@ -700,7 +771,7 @@ class thanh:
             while save_x < 0 or save_y < 0 or save_x >= self.row or save_y >= self.column or self.map[save_x][save_y]==1:
                 count = random.randint(0,7)
                 save_x = x + self.move_x[count] ; save_y = y + self.move_y[count]
-            self.request_print("random step taken at: " + str(save_x) + ' ' + str(save_y))
+            self.request_print("WARNING: random step taken at: " + str(save_x) + ' ' + str(save_y))
 
         self.heuristic_map_copy_temp = copy.deepcopy(self.heuristic_map)
         return save_x, save_y
@@ -786,6 +857,28 @@ class thanh:
                     save_y = j
         return save_x, save_y
 
+    def accessible_global_max(self,x,y):
+        self.discover_by_bfs(x,y)
+        max = -999999; ret_x = -1; ret_y = -1
+        for i in range(self.row):
+            for j in range(self.column):
+                if self.heuristic_map[i][j] > max and self.reachable_map[i][j] == 1:
+                    max = self.heuristic_map[i][j]
+                    ret_x = i
+                    ret_y = j
+        return ret_x,ret_y
+
+    def accessible_global_min(self,x,y):
+        self.discover_by_bfs(x,y)
+        min = 999999; ret_x = -1; ret_y = -1
+        for i in range(self.row):
+            for j in range(self.column):
+                if self.heuristic_map[i][j] < min and self.reachable_map[i][j] == 1:
+                    min = self.heuristic_map[i][j]
+                    ret_x = i
+                    ret_y = j
+        return ret_x,ret_y
+
     def global_min(self):
         min = 999999
         save_x = 0
@@ -806,7 +899,7 @@ class thanh:
         
         if (is_goal):
             self.heuristic_map[x][y] = self.heuristic_map[res_x][res_y]
-            self.goalx = -1; self.goaly = -1
+            self.previous_goal_x = -1; self.previous_goal_y = -1
         else:
             penalty_point = abs(self.heuristic_map[x][y] - self.heuristic_map[res_x][res_y]) /10
             self.heuristic_map[x][y] = self.heuristic_map[res_x][res_y]

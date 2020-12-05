@@ -5,7 +5,17 @@ class Obstacle:
         self.upperLeft = copy.deepcopy(upperLeftPosition) #[row, col]
         self.size = copy.deepcopy(size)
         self.color = color
-    
+        self.left = False
+        self.right = False
+        self.up = False
+        self.down = False
+
+    def reset_push(self):
+        self.left = False
+        self.right = False
+        self.up = False
+        self.down = False
+
     def move(self, direction):
         if direction.lower() == 'left':
             self.upperLeft[1] -= 1
