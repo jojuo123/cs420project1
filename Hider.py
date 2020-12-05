@@ -300,22 +300,33 @@ class Hider(ag.Agent):
                             if self.map[r][c]==1 or self.mapDeadEnd[r][c]==1:
                                 ans+=1
                     return ans
+                def deadScore4dir (pos):
+                    ans=0
+                    for i in range(len(self.dr4)):
+                        r,c=[pos[0]+self.dr4[i], pos[1]+self.dc4[i]]
+                        if not inside(r,c):
+                            ans+=1
+                        else:
+                            if self.map[r][c]==1 or self.mapDeadEnd[r][c]==1:
+                                ans+=1
+                    return ans
+                def deadCell (pos):
+                    return (deadScore(pos)>=7) or (deadScore(pos)>=6 and deadScore4dir(pos)>=3)
+
                 visit=[[0 for j in range(self.nc)] for i in range(self.nr)]
                 q=Queue()
                 for i in range(self.nr):
                     for j in range(self.nc):
-                        if self.map[i][j]==0 and deadScore([i,j]) >= 7:
+                        if deadCell([i,j]) and self.map[i][j]==0:
                             self.mapDeadEnd[i][j] = 1
                             visit[i][j]=1
                             q.put([i,j])
                 # BFS the dead cells
                 while not q.empty():
                     r,c = q.get()
-                    if c==0:
-                        x=42
                     for i in range(len(self.dr4)):
                         rr, cc = [r+self.dr4[i], c+self.dc4[i]]
-                        if inside(rr,cc) and self.map[rr][cc]==0 and deadScore([rr,cc])>=7 and visit[rr][cc]==0:
+                        if inside(rr,cc) and self.map[rr][cc]==0 and deadCell([rr,cc]) and visit[rr][cc]==0:
                             self.mapDeadEnd[rr][cc]=1
                             visit[rr][cc]=1
                             q.put([rr,cc])
@@ -500,6 +511,7 @@ class Hider(ag.Agent):
                 BONUS_PLAIN_NEIGHBOR = 10
                 PENALTY_DEADEND = 1000000
                 PENALTY_HEURISTIC_DISTANCE = 3
+                PENALTY_HEURISTIC_DISTANCE_DEADEND = 50
                 PENALTY_UNREACHABLE = 100000000
 
                 goalEval=[[0 for j in range(self.nc)] for i in range(self.nr)]
@@ -514,7 +526,7 @@ class Hider(ag.Agent):
                 
                 def distance_score (r1, c1, r2, c2):
                     dis = max(abs(r1-r2), abs(c1-c2))
-                    return PENALTY_HEURISTIC_DISTANCE * dis
+                    return dis
                 self.generateMapReachable(pos, environment, obstacleArray)
 
                 Max=-999999999999; save_goal=pos
@@ -530,8 +542,10 @@ class Hider(ag.Agent):
                             goalEval[i][j] += terrain_score(i,j)
                         if self.mapDeadEnd[i][j] == 1:
                             goalEval[i][j] -= PENALTY_DEADEND
+                            # Penalty distance more
+                            goalEval[i][j] -= PENALTY_HEURISTIC_DISTANCE_DEADEND * distance_score(i,j,pos[0],pos[1])
                         
-                        goalEval[i][j] -= distance_score(i,j,pos[0],pos[1])
+                        goalEval[i][j] -= PENALTY_HEURISTIC_DISTANCE * distance_score(i,j,pos[0],pos[1])
 
                         if (environment.board[i][j]==0 and goalEval[i][j] > Max):
                             Max=goalEval[i][j]
