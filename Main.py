@@ -258,8 +258,8 @@ if __name__=='__main__':
             seeker_score = engine.score
             curr_time = int(time.time() - begin)
             time_passed = str("%.2f" % (time.time() - begin)) + "s"
-            if done or CURRENT_TURN >= TURN_LIMIT or curr_time >= TIME_LIMIT:
-                if CURRENT_TURN >= TURN_LIMIT:
+            if done or (CURRENT_TURN >= TURN_LIMIT and engine_level == 4) or curr_time >= TIME_LIMIT:
+                if CURRENT_TURN >= TURN_LIMIT and engine_level == 4:
                     status = "SEEKER RUNS OUT OF TURN"
                 elif curr_time >= TIME_LIMIT:
                     status = "SEEKER RUNS OUT OF TIME"
