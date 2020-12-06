@@ -125,7 +125,7 @@ class Engine:
                         isMoveable = False
                         break
                 if isMoveable:
-                    obstacle.left - True
+                    obstacle.left = True
             if (obstacle.upperLeft[1] == AgentPosition[1] + 1) and (obstacle.upperLeft[0] <= AgentPosition[0] <= obstacle.upperLeft[0] + obstacle.size[0] - 1) and (obstacle.size[1] == 1): #right
                 for i in range(obstacle.upperLeft[0], obstacle.upperLeft[0] + obstacle.size[0]):
                     if isInside(i, obstacle.upperLeft[1] + 1, self.environment.rows, self.environment.columns):
@@ -182,7 +182,7 @@ class Engine:
         seekerNextPosition = []
         if (self.level == 4):
             pushableObsAround = copy.deepcopy(self.GetObsAround(self.seeker.position))
-            newObstaclePositions, seekerNextPosition = self.seeker.moveL4(self.environment, hiderSound, hiderInSight, copy.deepcopy(self.obstacles), pushableObsAround) #deepcopy ở đây là quan trọng
+            newObstaclePositions, seekerNextPosition = self.seeker.moveL4(self.environment, hiderSound, hiderInSight, copy.deepcopy(self.obstacles), pushableObsAround,4) #deepcopy ở đây là quan trọng
             if not newObstaclePositions is None:
                 self.obstacles = copy.deepcopy(newObstaclePositions)
         else:
@@ -194,13 +194,15 @@ class Engine:
         #print("Seeker move to: ",str(self.seeker.position))
         #print(self.seeker.position)
         self.announceList = []
+        remainingHiders = []
         for hider in self.hiders:
             if self.checkDie(self.seeker, hider):
                 hider.Dead()
                 self.UpdateScore(True)
                 self.deadhiders.append(hider)
-                self.hiders.remove(hider)
+                #self.hiders.remove(hider)
                 continue
+            remainingHiders.append(hider)
             hiderVision = hider.getVision(self.environment, self.obstacles)
             seekerInSight = self.showSight(visionMap=hiderVision, isSeeker=False, prevSeekerPosition=prevSeekerPosition)
 
@@ -222,6 +224,7 @@ class Engine:
             if not announcePosition is None:
                 #print ("Hider announce at: "+str(announcePosition))
                 self.announceList.append(copy.deepcopy(announcePosition))
+        self.hiders=remainingHiders
 
     def isEnd(self):
         # if self.TurnLimit() <= self.turn:
