@@ -450,17 +450,19 @@ class thanh:
         self.heuristic_map_copy = copy.deepcopy(self.heuristic_map)
         #feel free to change this copy
         self.heuristic_map_copy_temp = copy.deepcopy(self.heuristic_map)
+        #a map which shows if a cell is accessible from seeker's position
         self.reachable_map = None
         self.rear_obstacles_map = np.zeros((self.row,self.column))
 
-    def check_pushable_obs(self, obs,pushable_obs_list):
-        if pushable_obs_list is None or pushable_obs_list == []:
-            return True
-        for i in range(len(pushable_obs_list)):
-            if obs.upperLeft == pushable_obs_list[i].upperLeft:
-                return False
-        return True
-
+    #def check_pushable_obs(self, obs,pushable_obs_list):
+    #    if pushable_obs_list is None or pushable_obs_list == []:
+    #        return True
+    #    for i in range(len(pushable_obs_list)):
+    #        if obs.upperLeft == pushable_obs_list[i].upperLeft:
+    #            return False
+    #    return True
+    
+    #shuffle list of checking neighbor steps to make finding path algorithm better
     def shuffle_neighbor_step(self):
         shuffle_list = []
         for i in range(8):
@@ -472,12 +474,14 @@ class thanh:
             self.move_x[i] = shuffle_list[i][0]
             self.move_y[i] = shuffle_list[i][1]
 
+    #start evaluating every cell in a map 
     def generate_heuristic(self):
         for i in range(self.row):
             for j in range(self.column):
                 if self.map[i][j] == 0:
                     self.calculate_heuristic(i,j)
 
+    #since minimum value will be popped out of frontier first so after evaluating heuristic, we reverse it to negative sign
     def transfer_points(self):
         for i in range(self.row):
             for j in range(self.column):
@@ -488,6 +492,7 @@ class thanh:
                 self.heuristic_map[i][j] *= -1
         self.write_log()
 
+    #flush out log of heuristic map
     def write_log(self):
         file = open("thanh.txt","w")
         for i in range(self.row):
@@ -496,6 +501,7 @@ class thanh:
             file.write('\n')
         file.close()
 
+    #calculate heuristic value at [x,y] position
     def calculate_heuristic(self, x, y):
         #init
         start_step = 0
@@ -543,7 +549,7 @@ class thanh:
         #diem nhan pham
         self.basic_heuristic[x][y] += random.randint(1,6)
 
-        #spread heuristic
+        #spread heuristic, cells that are next to an important cell will be rewarded with some bonuses
         count = 0
         for i in range(8):
             xx = x + self.move_x[count]
@@ -552,6 +558,7 @@ class thanh:
                 self.heuristic_map[xx][yy] += self.basic_heuristic[x][y]/5
             count += 1
 
+    #when there is at least one hider in sight, seeker starts to chase
     def chase_mode(self, x,y, vision_map, hider_loc):
         #self.request_print("chase mode: ON")
         random.shuffle(hider_loc)
@@ -563,12 +570,14 @@ class thanh:
         #find the closet hider
         sort_array.sort(key = get_key)
 
+        #set a hider to be the next goal
         self.goalx = sort_array[0][0] ; self.goaly = sort_array[0][1]
         goal_x = self.goalx ; goal_y = self.goaly
 
         self.request_print("chase: found hider at: " + str(self.goalx) + ' ' + str(self.goaly))
         ret_x, ret_y = self.direct_to_goal(x,y,[goal_x,goal_y])
 
+        #bug throwing
         if ret_x == -1 or ret_y == -1 or goal_x == -1 or goal_y == -1:
             self.breakpoint()
             if ret_x == -1 and ret_y == -1:
@@ -591,11 +600,13 @@ class thanh:
 
         return ret_x, ret_y
 
+    #to avoid printing same lines over and over, every thing needs to be print on console should go through this function
     def request_print(self, str):
         if (str != self.print_to_console):
             self.print_to_console = str
             print(self.print_to_console)
 
+    #when there is no seeker in sight, seeker starts to look around
     def explore_mode(self, x,y, vision_map, obs_list, pushable_obs_list):
         def get_key(element):
             return element[2]
@@ -641,7 +652,7 @@ class thanh:
 
         def get_key_sim(element):
             return element[3]
-        #try pushing around
+        #try pushing obstacles around
         simulation_array = self.try_pushing(x,y, pushable_obs_list)
         simulation_array.sort(key = get_key_sim)
         if simulation_array != []:
@@ -698,9 +709,11 @@ class thanh:
         self.penalty_vision(vision_map,save_x,save_y,goal_x,goal_y)
         return obs_list, save_x, save_y
 
+    #when every cell is visited but not all hiders are found -> restart and look around again
     def restart_heuristic_map(self):
         self.heuristic_map = copy.deepcopy(self.heuristic_map_copy)
 
+    #every cell that are adjacent to a obstacle should not be penalized -> create chance for seeker to start simulating pushing obstacles around
     def bonus_announce(self,announce_loc,x,y):
         minx,miny = self.accessible_global_min(x,y)
         self.request_print("announce bonus at " + str(announce_loc[0]))
@@ -714,6 +727,7 @@ class thanh:
                         self.heuristic_map[xx][yy] -= 5
 
     #trigger after map is updated with obs
+    #find out all accessible cells for seek's postition
     def discover_by_bfs(self, x,y):
         self.reachable_map = np.zeros((self.row,self.column))
         self.reachable_map[x][y] = 1
@@ -731,11 +745,11 @@ class thanh:
         #print(self.reachable_map)
         #os.system("pause")
 
+    #consider all obstacles as walls
     def make_obs_wall(self,obs_list,pushable_obs_list):
         self.map = copy.deepcopy(self.map_copy)
         self.heuristic_map_copy_temp = copy.deepcopy(self.heuristic_map)
         for i in range(len(obs_list)):
-            #if self.check_pushable_obs(obs_list[i],pushable_obs_list):
                 row = obs_list[i].size[0]
                 col = obs_list[i].size[1]
                 for j in range(obs_list[i].upperLeft[0], obs_list[i].upperLeft[0]+row):
@@ -743,6 +757,7 @@ class thanh:
                         self.map[j][k] = 1
                         self.heuristic_map[j][k] = 0 
 
+    #start simulating pushing all possible obstacles around
     def try_pushing(self, x,y, pushable_obs_list):
         if pushable_obs_list == None or pushable_obs_list == []:
             return []
@@ -875,7 +890,8 @@ class thanh:
                             self.heuristic_map[j][k] = 0
 
         return save_res_array
-                    
+             
+    #create a map that only contains 1 if a cell is next to an obstacle and 0 if not
     def bonus_rear_obstacles(self, obs_list):
         self.rear_obstacles_map = np.zeros((self.row,self.column))
         for i in range(len(obs_list)):
@@ -889,6 +905,7 @@ class thanh:
                         if xx >= 0 and xx < self.row and yy >= 0 and yy < self.column and self.map[xx][yy] == 0 and not obs_list[i].is_moved_once():
                             self.rear_obstacles_map[xx][yy] = 1
 
+    #main function to direct seeker
     def make_move(self, x, y, vision_map, announce_loc, hider_loc,obs_list1, pushable_obs_list1):
         obs_list = copy.deepcopy(obs_list1)
         pushable_obs_list = copy.deepcopy(pushable_obs_list1)
@@ -904,11 +921,13 @@ class thanh:
         if hider_loc != []:
             save_x,save_y = self.chase_mode(x,y,vision_map ,hider_loc)
         else:
+            #if seeker hears something
             if announce_loc != []:
                 self.bonus_announce(announce_loc,x,y)
 
             obs_list, save_x, save_y = self.explore_mode(x,y,vision_map,obs_list, pushable_obs_list)
-
+        
+        #bug throwing
         if save_x == -1 and save_y == -1:
             while save_x < 0 or save_y < 0 or save_x >= self.row or save_y >= self.column or self.map[save_x][save_y]==1:
                 count = random.randint(0,7)
@@ -918,12 +937,12 @@ class thanh:
         self.heuristic_map_copy_temp = copy.deepcopy(self.heuristic_map)
         return obs_list, save_x, save_y
 
+    #main A* algorithm to find shortest path for seeker to its goal
     def direct_to_goal(self,init_x,init_y,goal):
         parent = []; cost = []
 
         def mahattan(x,y,goal):
             return max(abs(x - goal[0]), abs(y - goal[1]))
-        #unfinished
         #def dead_end(x,y):
         #    if (parent[x][y] == []):
         #        return False
@@ -941,7 +960,7 @@ class thanh:
                 return False
             else:
                 return True
-
+        #init
         for i in range(self.row):
             temp = []; temp2 = []
             for j in range(self.column):
@@ -974,7 +993,7 @@ class thanh:
                     parent[xx][yy] = [x,y]
                     cost[xx][yy] = cost[x][y] + 1
                     array.append([xx,yy])
-
+        #trace back from goal to parent cell
         if (parent[goal[0]][goal[1]] == []):
               return -1,-1
         trace_x,trace_y = goal
@@ -986,7 +1005,7 @@ class thanh:
             trace_x = save_x; trace_y = save_y
         return trace_x,trace_y
 
-
+    #find a cell with minimum heuristic point on map
     def global_max(self):
         max = -999999
         save_x = 0
@@ -999,6 +1018,7 @@ class thanh:
                     save_y = j
         return save_x, save_y
 
+    #find a cell with minimum heuristic point on map that is accessible from seeker's position
     def accessible_global_max(self,x,y):
         self.discover_by_bfs(x,y)
         max = -999999; ret_x = -1; ret_y = -1
@@ -1010,6 +1030,7 @@ class thanh:
                     ret_y = j
         return ret_x,ret_y
 
+    #find a cell with maximum heuristic point on map that is accessible from seeker's position
     def accessible_global_min(self,x,y):
         self.discover_by_bfs(x,y)
         min = 999999; ret_x = -1; ret_y = -1
@@ -1021,6 +1042,7 @@ class thanh:
                     ret_y = j
         return ret_x,ret_y
 
+    #find a cell with maximum heuristic point on map
     def global_min(self):
         min = 999999
         save_x = 0
@@ -1033,6 +1055,7 @@ class thanh:
                     save_y = j
         return save_x, save_y
 
+    #penalize a cell which seeker steps on
     def penalty(self,is_goal,x,y):
         if self.previous_x == -1 or self.previous_y == -1:
             return
@@ -1046,7 +1069,7 @@ class thanh:
             penalty_point = abs(self.heuristic_map[x][y] - self.heuristic_map[res_x][res_y]) /10
             self.heuristic_map[x][y] = self.heuristic_map[res_x][res_y]
 
-
+    #penalize every cell that can be viewed from seeker's position
     def penalty_vision(self,vision_map,x,y,goal_x,goal_y):
         if self.previous_x == -1 or self.previous_y == -1:
             return
@@ -1073,12 +1096,13 @@ class thanh:
         #            if vision_map[i][j] == 1 and self.map[i][j] == 0 and (i -x)*sign_x >= 0 and (j -y)*sign_y >= 0:
         #                self.heuristic_map[i][j] = self.heuristic_map[xx][yy]
 
+        #every cell in seeker's view and not adjacent to an obstacle will be penalized
         for i in range(self.row):
             for j in range(self.column):
                 if vision_map[i][j] == 1 and self.map[i][j] == 0 and self.rear_obstacles_map[i][j] != 1:
                     self.heuristic_map[i][j] = self.heuristic_map[xx][yy]
 
-        #if goal -> pen
+        #penalize seek's goal if it is in seeker's view
         if vision_map[goal_x][goal_y] == 1:
             self.heuristic_map[goal_x][goal_y] = self.heuristic_map[xx][yy]
             self.goalx = -1 ; self.goaly = -1
