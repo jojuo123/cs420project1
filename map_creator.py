@@ -11,7 +11,7 @@ RED = (255, 0, 0)
 BLUE = (0, 0 , 255)
 DARK_GREY = (128, 128, 128)
 WOOD = (202,164,114)
-MAP_FILE = "map/level4/map10.txt"
+MAP_FILE = "map/level4/map11.txt"
  
 # This sets the WIDTH and HEIGHT of each grid location
 WIDTH = 20
@@ -213,6 +213,8 @@ while not done:
                 color = GREEN
             elif grid[row][column] == 4:
                 color = WOOD
+            elif grid[row][column] == 5:
+                color = BLUE
             pygame.draw.rect(screen,
                              color,
                              [(MARGIN + WIDTH) * column + MARGIN,
