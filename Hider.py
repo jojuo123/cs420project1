@@ -44,7 +44,7 @@ class Hider(ag.Agent):
     def moveProb(self, seekerInSight):
         if (seekerInSight is None):
             return 1.0
-        return 1.0
+        return 0.8
 
     def initMoveL4(self, environment, seekerInSight, obstacleArray = None, pushableAroundArray = None):
         # Lú
@@ -344,7 +344,6 @@ class Hider(ag.Agent):
             return self.position
 
     def moveTacticV1 (self, environment, seekerInSight, obstacleArray):
-
         if self.tactic_v1 is None:
             self.tactic_v1 = TacticV1(environment, obstacleArray)
         return self.tactic_v1.move(self,environment,seekerInSight,obstacleArray)

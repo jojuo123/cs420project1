@@ -30,7 +30,8 @@ used_color.append([1, DARK_GREY]) ; used_color.append([5,PINK]) ; used_color.app
 
 #gameplay constant
 MAP_FILE = ""
-MAX_WAIT_TIME = 0
+
+MAX_WAIT_TIME = 0.05
 TURN_LIMIT = 2000
 INIT_TURN = 50
 TIME_LIMIT = 200
@@ -254,6 +255,7 @@ if __name__=='__main__':
 
             #engine do
             CURRENT_TURN += 1
+
             if (engine_level == 4 and CURRENT_TURN <= INIT_TURN):
                 engine.InitPlayForHider()
             else:
