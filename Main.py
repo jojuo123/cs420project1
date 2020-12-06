@@ -43,7 +43,7 @@ HEIGHT = 20
 MARGIN = 1
 
 sys.setrecursionlimit(5000)
-
+"""
 def get_file():
     file_name = "map/level"
     level = int(input("choose level: "))
@@ -72,8 +72,7 @@ def get_file(level_test, map_test):
     file_num = map_test
     file_name += entries[file_num-1]
     
-    return file_name,level
-   """ 
+    return file_name, level
 
 def get_new_color():
     old_color = True
@@ -185,13 +184,14 @@ def print_summary(level,file_path,status, total_run_time, score, seeker_steps, t
     print("Seeker steps: " + str(seeker_steps))
     print("\nSeeker score: " + str(score))
     print("\n\n\n\n\n\n-----------------------------------------------------------------------")
-    # file = open("experiment/level3.txt", "a")
-    # file.write("{},{},{}\n".format(str(score), str(seeker_steps), str(total_run_time)))
-    # file.close()
+    file = open("experiment/level3.txt", "a")
+    file.write("{},{},{}\n".format(str(score), str(seeker_steps), str(total_run_time)))
+    file.close()
 
 def get_key(element):
     return element[0]
 
+"""
 if __name__=='__main__':
     # init necessary components
     used_color.sort(key = get_key)
@@ -322,8 +322,6 @@ if __name__=='__main__':
         # on exit.
     pygame.quit()
 
-
-
 """
 if __name__=='__main__':
     level = 3
@@ -341,12 +339,7 @@ if __name__=='__main__':
             #lay map tu file 'map.txt'
             total_row, total_column, board, seeker, hiders,obs_list = import_map(MAP_FILE)
             environment = env.Environment(board, total_row, total_column)
-            #khoi tao hider va seeker
-            #hiders = []
-            #seeker = seek.Seeker(0, 1, 3, 5)
-            #hiders.append(hide.Hider(0, 0, 3))
-            #hiders.append(hide.Hider(29, 26, 3))
-            #khoi tao engine
+            
             engine = eng.Engine(environment=environment, hiders=hiders, seeker=seeker,obstacles = obs_list)
             engine.setLevel(engine_level)
 
@@ -404,7 +397,7 @@ if __name__=='__main__':
                 wait_time = time.time() - timing
                 if time.time() - timing >= MAX_WAIT_TIME:
                     #set caption
-                    time_passed = str("%.2f" % (time.time() - begin)) + "s"
+                    time_passed = str("%.2f" % (time.time() - begin))
                     score = engine.score
                     caption = set_caption(engine_level,time_passed,TIME_LIMIT,score)
                     pygame.display.set_caption(caption)
@@ -415,9 +408,9 @@ if __name__=='__main__':
                     done = engine.isEnd()
                     seeker_score = engine.score
                     curr_time = int(time.time() - begin)
-                    time_passed = str("%.2f" % (time.time() - begin)) + "s"
-                    if done or CURRENT_TURN >= TURN_LIMIT or curr_time >= TIME_LIMIT:
-                        if CURRENT_TURN >= TURN_LIMIT:
+                    time_passed = str("%.2f" % (time.time() - begin))
+                    if done or (CURRENT_TURN >= TURN_LIMIT and engine_level == 4) or curr_time >= TIME_LIMIT:
+                        if CURRENT_TURN >= TURN_LIMIT and engine_level == 4:
                             status = "SEEKER RUNS OUT OF TURN"
                         elif curr_time >= TIME_LIMIT:
                             status = "SEEKER RUNS OUT OF TIME"
@@ -429,19 +422,6 @@ if __name__=='__main__':
                 
                 for row in range(total_row):
                     for column in range(total_column):
-                        #color = WHITE
-                        #if visual_map[row][column] == 1:
-                        #    color = DARK_GREY
-                        #elif visual_map[row][column] == 3:
-                        #    color = RED
-                        #elif visual_map[row][column] == 2:
-                        #    color = GREEN
-                        #elif visual_map[row][column] == 4:
-                        #    color = WOOD
-                        #elif visual_map[row][column] == 998:
-                        #    color = PINK
-                        #elif visual_map[row][column] == 999:
-                        #    color = LIGHT_CYAN
                         color = used_color[visual_map[row][column]][1]
                         pygame.draw.rect(screen,
                                         color,
@@ -460,4 +440,3 @@ if __name__=='__main__':
                 # on exit.
             pygame.quit()
 
-    """
