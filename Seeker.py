@@ -502,11 +502,15 @@ class thanh:
         xx = x + self.move_x[0]
         yy = y + self.move_y[0]
         count = 0
-
+        already_zero = True
         #find start point of the wall
         while True:
             if count == 0:
-                count = 7
+                if already_zero:
+                    count = 7
+                    already_zero = False
+                else:
+                    break
             else:
                 count -= 1
             xx = x + self.move_x[count]
