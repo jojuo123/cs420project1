@@ -93,7 +93,10 @@ class Hider(ag.Agent):
                 obsArr=copy.deepcopy(obstacleArray)
                 direction=getPushDirection(pushablArr[id])
 
-                obsArr.remove(pushablArr[id])
+                for i in range(len(obsArr)):
+                    if (obsArr[i].upperLeft == pushablArr[id].upperLeft):
+                        obsArr.pop(i)
+                        break
                 pushablArr[id].move(direction)
                 obsArr.append(pushablArr[id])
 
@@ -130,7 +133,10 @@ class Hider(ag.Agent):
             obsArr=copy.deepcopy(obstacleArray)
             direction=getPushDirection(pushablArr[id])
 
-            obsArr.remove(pushablArr[id])
+            for i in range(len(obsArr)):
+                    if (obsArr[i].upperLeft == pushablArr[id].upperLeft):
+                        obsArr.pop(i)
+                        break
             pushablArr[id].move(direction)
             obsArr.append(pushablArr[id])
 
