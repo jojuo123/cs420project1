@@ -213,6 +213,8 @@ while not done:
                 color = GREEN
             elif grid[row][column] == 4:
                 color = WOOD
+            elif grid[row][column] == 5:
+                color = BLUE
             pygame.draw.rect(screen,
                              color,
                              [(MARGIN + WIDTH) * column + MARGIN,
