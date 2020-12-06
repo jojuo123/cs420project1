@@ -595,6 +595,7 @@ class thanh:
         return ret_x, ret_y
 
     def request_print(self, str):
+        return None
         if (str != self.print_to_console):
             self.print_to_console = str
             print(self.print_to_console)
@@ -655,7 +656,7 @@ class thanh:
                 obs_code = simulation_array[0][4] ; direction = simulation_array[0][5]
 
                 #suppose that we already pushed the obstacle -> replace current goal to be the next goal
-                print("best goal: ", str(best_x), str(best_y), self.heuristic_map[best_x][best_y], "potential goal: ", simulation_array[0][2], simulation_array[0][3])
+                # print("best goal: ", str(best_x), str(best_y), self.heuristic_map[best_x][best_y], "potential goal: ", simulation_array[0][2], simulation_array[0][3])
                 #os.system("pause")
                 self.goalx = simulation_array[0][2][0] ; self.goaly = simulation_array[0][2][1]
 

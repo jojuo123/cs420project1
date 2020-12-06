@@ -65,7 +65,7 @@ class Hider(ag.Agent):
                 return 'up'
             elif obstacle.left:
                 return 'left'
-            elif obstacle.down:
+            elif obstacle.right:
                 return 'right'
             return 'down'
         def getNewPos (position, direction):
@@ -130,6 +130,7 @@ class Hider(ag.Agent):
 
             # Triệu hồi Rồng Nhân Phẩm rồi đẩy
             id = random.randint(0,len(candidate_ids)-1)
+            id = candidate_ids[id]
             pushablArr=copy.deepcopy(pushableAroundArray)
             obsArr=copy.deepcopy(obstacleArray)
             direction=getPushDirection(pushablArr[id])
