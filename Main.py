@@ -255,6 +255,7 @@ if __name__=='__main__':
 
             #engine do
             CURRENT_TURN += 1
+            print("Current turn: ",CURRENT_TURN," / ",TURN_LIMIT)
 
             if (engine_level == 4 and CURRENT_TURN <= INIT_TURN):
                 engine.InitPlayForHider()
@@ -307,6 +308,7 @@ if __name__=='__main__':
  
         # Be IDLE friendly. If you forget this line, the program will 'hang'
         # on exit.
+    time.sleep(3.0)
     pygame.quit()
 
 
