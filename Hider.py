@@ -275,7 +275,7 @@ class Hider(ag.Agent):
         def iswall (r, c):
             return environment.board[r][c] == 1
         
-        dr=[-1,0,1,1,1,0,-1,-1]
+        dr=[-1,-1,0,1,1,1,0,-1]
         dc=[0,-1,-1,-1,0,1,1,1]
         def heuristic (x, y, xp, yp):
             return max(abs(x-xp), abs(y-yp))
@@ -335,6 +335,12 @@ class Hider(ag.Agent):
                 r=random.randint(0,nr-1); c=random.randint(0,nc-1)
                 if not iswall(r,c):
                     return [r,c]
+
+        if goal is not None:
+            if self.position != goal:
+                return direct_to_goal(self.position, goal)
+            else:
+                return self.position
 
         if (self.moveGoal_goal is None) or self.position==self.moveGoal_goal:
             if goal is None: # Random goal
