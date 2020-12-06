@@ -503,10 +503,16 @@ class thanh:
         yy = y + self.move_y[0]
         count = 0
 
+        already_zero = True
         #find start point of the wall
         while True:
             if count == 0:
-                count = 7
+                if already_zero:
+                    count = 7
+                    already_zero = False
+                else:
+                    break
+
             else:
                 count -= 1
             xx = x + self.move_x[count]
@@ -583,7 +589,8 @@ class thanh:
 
         self.previous_x = x ; self.previous_y = y
         self.penalty(is_goal,x,y)
-        self.penalty_vision(vision_map,ret_x,ret_y,goal_x,goal_y)
+
+        #self.penalty_vision(vision_map,ret_x,ret_y,goal_x,goal_y)
 
         return ret_x, ret_y
 
@@ -697,16 +704,19 @@ class thanh:
     def restart_heuristic_map(self):
         self.heuristic_map = copy.deepcopy(self.heuristic_map_copy)
 
-    def bonus_announce(self,announce_loc):
+
+    def bonus_announce(self,announce_loc,x,y):
+        minx,miny = self.accessible_global_min(x,y)
         self.request_print("announce bonus at " + str(announce_loc[0]))
         for k in range(len(announce_loc)):
             curr_x = announce_loc[k][0] ; curr_y = announce_loc[k][1]
             for i in range(-3,4,1):
                 for j in range(-3,4,1):
-                    x = curr_x + i
-                    y = curr_y + j
-                    if x >= 0 and x < self.row and y >= 0 and y < self.column and self.map[x][y] == 0:
-                        self.heuristic_map[x][y] -= 2
+
+                    xx = curr_x + i
+                    yy = curr_y + j
+                    if xx >= 0 and xx < self.row and yy >= 0 and yy < self.column and self.map[x][y] == 0:
+                        self.heuristic_map[xx][yy] -= 5
 
     #trigger after map is updated with obs
     def discover_by_bfs(self, x,y):
@@ -900,7 +910,8 @@ class thanh:
             save_x,save_y = self.chase_mode(x,y,vision_map ,hider_loc)
         else:
             if announce_loc != []:
-                self.bonus_announce(announce_loc)
+
+                self.bonus_announce(announce_loc,x,y)
 
             obs_list, save_x, save_y = self.explore_mode(x,y,vision_map,obs_list, pushable_obs_list)
 

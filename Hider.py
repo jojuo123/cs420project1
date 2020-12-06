@@ -44,7 +44,7 @@ class Hider(ag.Agent):
     def moveProb(self, seekerInSight):
         if (seekerInSight is None):
             return 1.0
-        return 1.0
+        return 0.8
 
     def initMoveL4(self, environment, seekerInSight, obstacleArray = None, pushableAroundArray = None):
         # Lú
@@ -97,6 +97,7 @@ class Hider(ag.Agent):
                     if (obsArr[i].upperLeft == pushablArr[id].upperLeft):
                         obsArr.pop(i)
                         break
+
                 pushablArr[id].move(direction)
                 obsArr.append(pushablArr[id])
 
@@ -137,6 +138,7 @@ class Hider(ag.Agent):
                     if (obsArr[i].upperLeft == pushablArr[id].upperLeft):
                         obsArr.pop(i)
                         break
+
             pushablArr[id].move(direction)
             obsArr.append(pushablArr[id])
 
