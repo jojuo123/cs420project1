@@ -508,6 +508,7 @@ class thanh:
         xx = x + self.move_x[0]
         yy = y + self.move_y[0]
         count = 0
+
         already_zero = True
         #find start point of the wall
         while True:
@@ -517,6 +518,7 @@ class thanh:
                     already_zero = False
                 else:
                     break
+
             else:
                 count -= 1
             xx = x + self.move_x[count]
@@ -596,12 +598,14 @@ class thanh:
 
         self.previous_x = x ; self.previous_y = y
         self.penalty(is_goal,x,y)
+
         #self.penalty_vision(vision_map,ret_x,ret_y,goal_x,goal_y)
 
         return ret_x, ret_y
 
     #to avoid printing same lines over and over, every thing needs to be print on console should go through this function
     def request_print(self, str):
+        return None
         if (str != self.print_to_console):
             self.print_to_console = str
             print(self.print_to_console)
@@ -663,7 +667,7 @@ class thanh:
                 obs_code = simulation_array[0][4] ; direction = simulation_array[0][5]
 
                 #suppose that we already pushed the obstacle -> replace current goal to be the next goal
-                print("best goal: ", str(best_x), str(best_y), self.heuristic_map[best_x][best_y], "potential goal: ", simulation_array[0][2], simulation_array[0][3])
+                # print("best goal: ", str(best_x), str(best_y), self.heuristic_map[best_x][best_y], "potential goal: ", simulation_array[0][2], simulation_array[0][3])
                 #os.system("pause")
                 self.goalx = simulation_array[0][2][0] ; self.goaly = simulation_array[0][2][1]
 
@@ -713,7 +717,9 @@ class thanh:
     def restart_heuristic_map(self):
         self.heuristic_map = copy.deepcopy(self.heuristic_map_copy)
 
+
     #every cell that are adjacent to a obstacle should not be penalized -> create chance for seeker to start simulating pushing obstacles around
+
     def bonus_announce(self,announce_loc,x,y):
         minx,miny = self.accessible_global_min(x,y)
         self.request_print("announce bonus at " + str(announce_loc[0]))
@@ -721,6 +727,7 @@ class thanh:
             curr_x = announce_loc[k][0] ; curr_y = announce_loc[k][1]
             for i in range(-3,4,1):
                 for j in range(-3,4,1):
+
                     xx = curr_x + i
                     yy = curr_y + j
                     if xx >= 0 and xx < self.row and yy >= 0 and yy < self.column and self.map[x][y] == 0:
@@ -923,6 +930,7 @@ class thanh:
         else:
             #if seeker hears something
             if announce_loc != []:
+
                 self.bonus_announce(announce_loc,x,y)
 
             obs_list, save_x, save_y = self.explore_mode(x,y,vision_map,obs_list, pushable_obs_list)
