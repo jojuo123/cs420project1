@@ -30,7 +30,7 @@ used_color.append([1, DARK_GREY]) ; used_color.append([5,PINK]) ; used_color.app
 
 #gameplay constant
 MAP_FILE = ""
-MAX_WAIT_TIME = 0
+MAX_WAIT_TIME = 0.05
 TURN_LIMIT = 2000
 TIME_LIMIT = 200
 CURRENT_TURN = 0
