@@ -47,7 +47,6 @@ class Hider(ag.Agent):
         return 0.8
 
     def initMoveL4(self, environment, seekerInSight, obstacleArray = None, pushableAroundArray = None):
-        # Lú
         """
         Nếu xung quanh không có ô nào đẩy được, thì đi như level 3
         Nếu có ô đẩy được (tối đa 4 ô như vậy):
@@ -121,14 +120,14 @@ class Hider(ag.Agent):
                 if dm>0 or de<0:
                     candidate_ids.append(id)
                 # Tính cách của tác giả dòng code này: 60% lý trí
-                # 40% chơi ngu
+                # 40% là sự ngẫu nhiên
                 if (random.random()<0.4):   
                     candidate_ids.append(id)
 
             if (candidate_ids == []):
                 return obstacleArray, old_ttc.move(self, old_env, seekerInSight, obstacleArray)
 
-            # Triệu hồi Rồng Nhân Phẩm rồi đẩy
+            # Sự ngẫu nhiên rất thú vị...
             id = random.randint(0,len(candidate_ids)-1)
             id = candidate_ids[id]
             pushablArr=copy.deepcopy(pushableAroundArray)
@@ -364,7 +363,9 @@ class Hider(ag.Agent):
             self.tactic_v1 = TacticV1(environment, obstacleArray)
         return self.tactic_v1.move(self,environment,seekerInSight,obstacleArray)
 
-class TacticV1: # Now don't use obstacleArray yet
+class TacticV1: # No need to care about obstacles, because obstacle is assigned as wall before constructing TacticV1 class
+    # Those "obstacleArray" arguments are artifacts of a bad code.
+    # Because refactoring those may yield bugs, we are not wise enough to do a "refactor".
     def __init__ (self, environment, obstacleArray):
         self.nr=environment.rows
         self.nc=environment.columns
@@ -395,6 +396,7 @@ class TacticV1: # Now don't use obstacleArray yet
                 fill(rr,cc,fillval)
         fill(pos[0], pos[1], 1)
 
+    # Không cần xử lý obstacleArray, vì trước đó đã đổ hết obstacle ra, xem như tường.
     def generateMapDeadEnd (self, obstacleArrayNowNotProcessed):
         def inside (r,c):
             return r>=0 and r<self.nr and c>=0 and c<self.nc
@@ -671,7 +673,7 @@ class TacticV1: # Now don't use obstacleArray yet
         if self.beingChased ():
             if self.mapMerriable[hider.position[0]][hider.position[1]] == 1:
                 return self.merry_go_round(hider, self.lastKnownSeekerLocation, obstacleArray)
-            tmp = self.merriableGoal()
+            tmp = self.merriableGoal()  # This function do nothing, results of a bad code.
             if (tmp != []):
                 return hider.moveGoalAStar(environment, seekerInSight, tmp) # A* direct to goal
             return self.greedyDirection(hider, self.lastKnownSeekerLocation, obstacleArray)
