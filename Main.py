@@ -31,7 +31,7 @@ used_color.append([1, DARK_GREY]) ; used_color.append([5,PINK]) ; used_color.app
 #gameplay constant
 MAP_FILE = ""
 
-MAX_WAIT_TIME = 0.05
+MAX_WAIT_TIME = 0
 TURN_LIMIT = 2000
 INIT_TURN = 50
 TIME_LIMIT = 200
@@ -186,7 +186,7 @@ def print_summary(level,file_path,status, total_run_time, score, seeker_steps, t
     print("Seeker steps: " + str(seeker_steps))
     print("\nSeeker score: " + str(score))
     print("\n\n\n\n\n\n-----------------------------------------------------------------------")
-    file = open("experiment/level3.txt", "a")
+    file = open("experiment/level1.txt", "a")
     file.write("{},{},{}\n".format(str(score), str(seeker_steps), str(total_run_time)))
     file.close()
 
@@ -333,7 +333,7 @@ if __name__=='__main__':
 
 """
 if __name__=='__main__':
-    level = 3
+    level = 1
     for map in range(1,10):
         # init necessary components
         used_color.sort(key = get_key)
