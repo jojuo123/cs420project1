@@ -10,7 +10,7 @@ class Engine:
         self.environment = copy.deepcopy(environment)
         self.seeker = copy.deepcopy(seeker)
         self.hiders = copy.deepcopy(hiders)
-        self.score = 0
+        self.score = 1000
         self.turn = 0
         self.announceList = []
         self.level = 1
@@ -150,9 +150,23 @@ class Engine:
     def InitPlayForHider(self):
         if self.level < 4:
             return
-        turn = 0
-        while (turn < self.TurnLimitForHider()):
-            turn += 1
+        # turn = 0
+        # while (turn < self.TurnLimitForHider()):
+        #     turn += 1
+        for hider in self.hiders:
+            hiderVision = hider.getVision(self.environment, self.obstacles)
+            seekerInSight = self.showSight(visionMap=hiderVision, isSeeker=False, prevSeekerPosition=copy.deepcopy(self.seeker.position))
+
+            newObstaclePositions, hiderNextPosition = hider.initMoveL4(copy.deepcopy(self.environment), seekerInSight, copy.deepcopy(self.obstacles), copy.deepcopy(self.GetObsAround(hider.position)))
+
+            if not newObstaclePositions is None:
+                self.obstacles = copy.deepcopy(newObstaclePositions)
+            
+            if not hiderNextPosition is None:
+                hider.position = copy.deepcopy(hiderNextPosition)
+            
+
+        
             
     def play(self):
         #self.seeker.move(self.environment, [1, 1], [1, 1, 2])
