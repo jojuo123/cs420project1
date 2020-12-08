@@ -4,13 +4,14 @@ import Hider as hide
 import Seeker as seek
 import Obstacle as obs
 import copy
+import os
 
 class Engine:
     def __init__(self, environment, hiders, seeker, obstacles = None):
         self.environment = copy.deepcopy(environment)
         self.seeker = copy.deepcopy(seeker)
         self.hiders = copy.deepcopy(hiders)
-        self.score = 0
+        self.score = 1000
         self.turn = 0
         self.announceList = []
         self.level = 1
@@ -79,9 +80,10 @@ class Engine:
         
         direction = ''
         for obstacle in self.obstacles:
-            isMoveable = True
+            isMoveable = False
             obstacle.reset_push()
             if (obstacle.upperLeft[0] == AgentPosition[0] - 1) and (obstacle.upperLeft[1] <= AgentPosition[1] <= obstacle.upperLeft[1] + obstacle.size[1] - 1) and (obstacle.size[0] == 1): #up
+                isMoveable=True
                 for i in range(obstacle.upperLeft[1], obstacle.upperLeft[1] + obstacle.size[1]):
                     if isInside(obstacle.upperLeft[0] - 1, i, self.environment.rows, self.environment.columns):
                         if tmpboard[obstacle.upperLeft[0] - 1][i] == 1:
@@ -97,6 +99,7 @@ class Engine:
                 if isMoveable:
                     obstacle.up = True
             if (obstacle.upperLeft[0] == AgentPosition[0] + 1) and (obstacle.upperLeft[1] <= AgentPosition[1] <= obstacle.upperLeft[1] + obstacle.size[1] - 1) and (obstacle.size[0] == 1): #down
+                isMoveable=True
                 for i in range(obstacle.upperLeft[1], obstacle.upperLeft[1] + obstacle.size[1]):
                     if isInside(obstacle.upperLeft[0] + 1, i, self.environment.rows, self.environment.columns):
                         if tmpboard[obstacle.upperLeft[0] + 1][i] == 1:
@@ -112,6 +115,7 @@ class Engine:
                 if isMoveable:
                     obstacle.down = True
             if (obstacle.upperLeft[1] == AgentPosition[1] - 1) and (obstacle.upperLeft[0] <= AgentPosition[0] <= obstacle.upperLeft[0] + obstacle.size[0] - 1) and (obstacle.size[1] == 1): #left
+                isMoveable=True
                 for i in range(obstacle.upperLeft[0], obstacle.upperLeft[0] + obstacle.size[0]):
                     if isInside(i, obstacle.upperLeft[1] - 1, self.environment.rows, self.environment.columns):
                         if tmpboard[i][obstacle.upperLeft[1] - 1] == 1:
@@ -127,6 +131,7 @@ class Engine:
                 if isMoveable:
                     obstacle.left = True
             if (obstacle.upperLeft[1] == AgentPosition[1] + 1) and (obstacle.upperLeft[0] <= AgentPosition[0] <= obstacle.upperLeft[0] + obstacle.size[0] - 1) and (obstacle.size[1] == 1): #right
+                isMoveable=True
                 for i in range(obstacle.upperLeft[0], obstacle.upperLeft[0] + obstacle.size[0]):
                     if isInside(i, obstacle.upperLeft[1] + 1, self.environment.rows, self.environment.columns):
                         if tmpboard[i][obstacle.upperLeft[1] + 1] == 1:
@@ -150,9 +155,31 @@ class Engine:
     def InitPlayForHider(self):
         if self.level < 4:
             return
-        turn = 0
-        while (turn < self.TurnLimitForHider()):
-            turn += 1
+        # turn = 0
+        # while (turn < self.TurnLimitForHider()):
+        #     turn += 1
+        for hider in self.hiders:
+            hiderVision = hider.getVision(self.environment, self.obstacles)
+            seekerInSight = self.showSight(visionMap=hiderVision, isSeeker=False, prevSeekerPosition=copy.deepcopy(self.seeker.position))
+
+            tmp=copy.deepcopy(self.GetObsAround(hider.position))
+            """
+            for obs in tmp:
+                print("Obs size left right down up: ",obs.upperLeft," ",obs.size \
+                    ," ",obs.left," ",obs.right," ",obs.down," ",obs.up)
+            print("Hider at: ", hider.position)
+            print("=====")
+            """
+            newObstaclePositions, hiderNextPosition = hider.initMoveL4(copy.deepcopy(self.environment), seekerInSight, copy.deepcopy(self.obstacles), tmp)
+
+            if not newObstaclePositions is None:
+                self.obstacles = copy.deepcopy(newObstaclePositions)
+            
+            if not hiderNextPosition is None:
+                hider.position = copy.deepcopy(hiderNextPosition)
+            
+
+        
             
     def play(self):
         #self.seeker.move(self.environment, [1, 1], [1, 1, 2])
@@ -170,7 +197,13 @@ class Engine:
         #   seekinsight = showseek(hidervis) -> 1 [x, y] hoac None
         #   hider.move(env, seekinsight)
         #   announceList.append(hider.announce(self.turn)) if khac <> None
-
+        """
+        if (self.turn==0):
+            for hider in self.hiders:
+                print("Hider: ",hider.position)
+            print("===")
+            os.system("pause")
+        """
         self.turn += 1
         self.UpdateScore()
         seekVision = self.seeker.getVision(self.environment, self.obstacles)
@@ -194,13 +227,15 @@ class Engine:
         #print("Seeker move to: ",str(self.seeker.position))
         #print(self.seeker.position)
         self.announceList = []
+        remainingHiders = []
         for hider in self.hiders:
             if self.checkDie(self.seeker, hider):
                 hider.Dead()
                 self.UpdateScore(True)
                 self.deadhiders.append(hider)
-                self.hiders.remove(hider)
+                #self.hiders.remove(hider)
                 continue
+            remainingHiders.append(hider)
             hiderVision = hider.getVision(self.environment, self.obstacles)
             seekerInSight = self.showSight(visionMap=hiderVision, isSeeker=False, prevSeekerPosition=prevSeekerPosition)
 
@@ -222,6 +257,7 @@ class Engine:
             if not announcePosition is None:
                 #print ("Hider announce at: "+str(announcePosition))
                 self.announceList.append(copy.deepcopy(announcePosition))
+        self.hiders=remainingHiders
 
     def isEnd(self):
         # if self.TurnLimit() <= self.turn:
